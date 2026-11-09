@@ -1,0 +1,32 @@
+import { createBrowserRouter, Navigate } from 'react-router'
+import { LoginPage } from '@/features/auth/LoginPage'
+import { SignupPage } from '@/features/auth/SignupPage'
+import { OwnerFormPage } from '@/features/owners/OwnerFormPage'
+import { OwnersPage } from '@/features/owners/OwnersPage'
+import { PropertiesPage } from '@/features/properties/PropertiesPage'
+import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
+import { PropertyFormPage } from '@/features/properties/PropertyFormPage'
+import { UsersPage } from '@/features/users/UsersPage'
+import { AppLayout } from './AppLayout'
+
+export const router = createBrowserRouter([
+  { path: '/', element: <Navigate to="/app/properties" replace /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/signup', element: <SignupPage /> },
+  {
+    path: '/app',
+    element: <AppLayout />,
+    children: [
+      { index: true, element: <Navigate to="properties" replace /> },
+      { path: 'properties', element: <PropertiesPage /> },
+      { path: 'properties/new', element: <PropertyFormPage /> },
+      { path: 'properties/:id', element: <PropertyDetailPage /> },
+      { path: 'properties/:id/edit', element: <PropertyFormPage key="edit" /> },
+      { path: 'owners', element: <OwnersPage /> },
+      { path: 'owners/new', element: <OwnerFormPage /> },
+      { path: 'owners/:id/edit', element: <OwnerFormPage key="edit" /> },
+      { path: 'users', element: <UsersPage /> },
+    ],
+  },
+  { path: '*', element: <p className="p-6">Página não encontrada.</p> },
+])

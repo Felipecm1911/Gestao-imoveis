@@ -52,7 +52,10 @@ Modelo: **schema compartilhado** com `organization_id` em toda tabela de negóci
    `USING (organization_id = current_setting('app.org_id')::uuid)`.
    O backend conecta como `app_user` (não é dono das tabelas, então não passa por cima do RLS). No início de cada transação o `TenantTransactionManager` executa `select set_config('app.org_id', :org, true)` (vale só para a transação).
    O Flyway roda como `app_owner`, dono do schema.
-   Cadastro de organização e login usam funções `SECURITY DEFINER` específicas, que são as únicas portas antes de existir uma organização na sessão.
+   Antes de existir organização na sessão há só duas portas:
+   - **Cadastro:** o backend gera o UUID da organização nova e grava `app.org_id` com ele antes dos INSERTs. O RLS vale normalmente.
+   - **Login:** a política `login_lookup` (só `SELECT` em `app_user`) libera a linha cujo e-mail é igual a `app.login_email`, gravado pelo backend na transação do login. Ninguém lê outras linhas, e não há função `SECURITY DEFINER` para manter.
+   O Spring Session usa um gerenciador de transação JDBC próprio (as tabelas de sessão não têm RLS). Assim, carregar a sessão para descobrir o usuário não reabre o `TenantTransactionManager`.
 
 Teste obrigatório: com dois tenants, cada endpoint de leitura e escrita é chamado com o ID de recurso do outro tenant e precisa responder 404. Uma query nativa sem filtro precisa retornar 0 linhas de outro tenant (prova de que o RLS funciona).
 
@@ -166,7 +169,7 @@ Implementação: `@PreAuthorize("hasAnyRole('ADMIN','STAFF')")` nos controllers 
 | organizations | `GET/PATCH /organization` |
 | owners | `GET/POST /owners`, `GET/PUT/DELETE /owners/{id}`, `POST /owners/{id}/anonymize` |
 | tenants | `GET/POST /tenants`, `GET/PUT/DELETE /tenants/{id}`, `GET /tenants/{id}/contracts`, `POST /tenants/{id}/anonymize` |
-| properties | `GET /properties?city&type&status&minRent&maxRent&q&page&size&sort`, `POST /properties`, `GET/PUT/DELETE /properties/{id}`, `POST /properties/{id}/photos` (multipart), `DELETE /properties/{id}/photos/{photoId}`, `PUT /properties/{id}/photos/{photoId}/cover`, `GET /properties/{id}/history` |
+| properties | `GET /properties?city&type&status&minRent&maxRent&q&page&size&sort`, `POST /properties`, `GET/PUT/DELETE /properties/{id}`, `POST /properties/{id}/photos` (multipart), `DELETE /properties/{id}/photos/{photoId}`, `PUT /properties/{id}/photos/{photoId}/cover`, `PATCH /properties/{id}/status` (DISPONIVEL/MANUTENCAO/INATIVO; OCUPADO só via contrato), `GET /properties/{id}/history` (Fase 3) |
 | contracts | `GET/POST /contracts`, `GET/PUT /contracts/{id}`, `POST /contracts/{id}/activate`, `POST /contracts/{id}/adjust`, `POST /contracts/{id}/renew`, `POST /contracts/{id}/terminate`, `GET /contracts/{id}/history`, `GET /contracts/{id}/pdf`, `GET /contracts/expiring?days=60` |
 | installments / payments | `GET /installments?contractId&propertyId&ownerId&tenantId&status&from&to`, `GET /installments/{id}`, `POST /installments/{id}/payments` (header `Idempotency-Key`), `POST /payments/{id}/reverse`, `GET /payments/{id}/receipt` |
 | expenses | `GET/POST /expenses`, `PUT/DELETE /expenses/{id}` |

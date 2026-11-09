@@ -16,8 +16,9 @@ class LocalFileStorage implements FileStorage {
 
     private final Path root;
 
-    LocalFileStorage(@Value("${app.upload-dir}") Path root) {
-        this.root = root.toAbsolutePath().normalize();
+    // String, não Path: a conversão do Spring para Path segue regras de "resource" e rejeita "../x"
+    LocalFileStorage(@Value("${app.upload-dir}") String root) {
+        this.root = Path.of(root).toAbsolutePath().normalize();
     }
 
     @Override
