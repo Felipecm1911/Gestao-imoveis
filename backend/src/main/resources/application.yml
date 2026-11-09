@@ -1,0 +1,31 @@
+spring:
+  application.name: gestao-imoveis
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:gestao_imoveis}
+    username: app_user
+    password: ${APP_USER_PASSWORD}
+  flyway:
+    user: app_owner
+    password: ${APP_OWNER_PASSWORD}
+    schemas: app
+    default-schema: app
+    create-schemas: false
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+    properties.hibernate.default_schema: app
+  session:
+    jdbc:
+      initialize-schema: never
+      table-name: app.spring_session
+    timeout: 8h
+  servlet.multipart:
+    max-file-size: 10MB
+    max-request-size: 25MB
+server:
+  servlet.session.cookie:
+    http-only: true
+    same-site: lax
+    secure: ${APP_COOKIE_SECURE:false}
+management.endpoints.web.exposure.include: health
+app.upload-dir: ${APP_UPLOAD_DIR:./data/uploads}
