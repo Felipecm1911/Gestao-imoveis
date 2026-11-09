@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, qs, type Page } from '@/lib/api'
+import { api, path, qs, type Page } from '@/lib/api'
 import type { OwnerPayload } from './schemas'
 
 export type Address = {
@@ -37,7 +37,7 @@ export function useOwners(params: { q?: string; page?: number; size?: number }) 
 export function useOwner(id: string | undefined) {
   return useQuery({
     queryKey: [...key, id],
-    queryFn: () => api<Owner>(`/owners/${id}`),
+    queryFn: () => api<Owner>(path`/owners/${id}`),
     enabled: !!id,
   })
 }
@@ -46,7 +46,7 @@ export function useSaveOwner(id?: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: OwnerPayload) =>
-      id ? api<Owner>(`/owners/${id}`, { method: 'PUT', body: payload }) : api<Owner>('/owners', { method: 'POST', body: payload }),
+      id ? api<Owner>(path`/owners/${id}`, { method: 'PUT', body: payload }) : api<Owner>('/owners', { method: 'POST', body: payload }),
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   })
 }
@@ -54,7 +54,7 @@ export function useSaveOwner(id?: string) {
 export function useDeleteOwner() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api<void>(`/owners/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => api<void>(path`/owners/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   })
 }

@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, qs, type Page } from '@/lib/api'
+import { api, path, qs, type Page } from '@/lib/api'
 import type { PropertyPayload } from './schemas'
 
 export type PropertyType = 'APARTAMENTO' | 'CASA' | 'COMERCIAL' | 'TERRENO' | 'OUTRO'
@@ -60,7 +60,7 @@ export function useProperties(filters: PropertyFilters) {
 export function useProperty(id: string | undefined) {
   return useQuery({
     queryKey: [...key, id],
-    queryFn: () => api<Property>(`/properties/${id}`),
+    queryFn: () => api<Property>(path`/properties/${id}`),
     enabled: !!id,
   })
 }
@@ -80,21 +80,21 @@ function usePropertyMutation<V>(fn: (vars: V) => Promise<Property | void>) {
 export function useSaveProperty(id?: string) {
   return usePropertyMutation((payload: PropertyPayload) =>
     id
-      ? api<Property>(`/properties/${id}`, { method: 'PUT', body: payload })
+      ? api<Property>(path`/properties/${id}`, { method: 'PUT', body: payload })
       : api<Property>('/properties', { method: 'POST', body: payload }),
   )
 }
 
 export function useChangeStatus(id: string) {
   return usePropertyMutation((status: PropertyStatus) =>
-    api<Property>(`/properties/${id}/status`, { method: 'PATCH', body: { status } }),
+    api<Property>(path`/properties/${id}/status`, { method: 'PATCH', body: { status } }),
   )
 }
 
 export function useDeleteProperty() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api<void>(`/properties/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => api<void>(path`/properties/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   })
 }
@@ -103,18 +103,18 @@ export function useUploadPhotos(id: string) {
   return usePropertyMutation((files: File[]) => {
     const form = new FormData()
     files.forEach((f) => form.append('files', f))
-    return api<Property>(`/properties/${id}/photos`, { method: 'POST', form })
+    return api<Property>(path`/properties/${id}/photos`, { method: 'POST', form })
   })
 }
 
 export function useDeletePhoto(id: string) {
   return usePropertyMutation((photoId: string) =>
-    api<Property>(`/properties/${id}/photos/${photoId}`, { method: 'DELETE' }),
+    api<Property>(path`/properties/${id}/photos/${photoId}`, { method: 'DELETE' }),
   )
 }
 
 export function useSetCover(id: string) {
   return usePropertyMutation((photoId: string) =>
-    api<Property>(`/properties/${id}/photos/${photoId}/cover`, { method: 'PUT' }),
+    api<Property>(path`/properties/${id}/photos/${photoId}/cover`, { method: 'PUT' }),
   )
 }

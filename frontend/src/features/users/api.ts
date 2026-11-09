@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { api, path } from '@/lib/api'
 import type { NewUserForm } from './schemas'
 
 export type User = {
@@ -28,7 +28,7 @@ export function useCreateUser() {
 export function useDeactivateUser() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api<void>(`/users/${id}/deactivate`, { method: 'POST' }),
+    mutationFn: (id: string) => api<void>(path`/users/${id}/deactivate`, { method: 'POST' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   })
 }

@@ -42,33 +42,42 @@ async function toError(res: Response): Promise<ApiError> {
   }
 }
 
+const invalidPath = () => new ApiError(400, 'Endereço inválido', 'O endereço solicitado é inválido.')
+
 /**
- * IDs vêm da URL do navegador. Um link como /app/properties/..%2Fusers%2Fx%2Fdeactivate faria
- * uma ação (com CSRF) bater em outra rota da API. Barra aqui, para todos os chamadores.
+ * Monta caminhos com IDs vindos da URL do navegador: path`/properties/${id}/status`.
+ * Cada valor é codificado (/, ?, #, \, %, tabs) e "." / ".." são recusados. Sem isso, um link forjado
+ * levaria uma ação (com CSRF) para outra rota da API.
  */
-export function assertSafePath(path: string) {
-  const segments = path.split(/[?#]/)[0].split('/')
-  const unsafe = segments.some((s) => {
-    let decoded: string
-    try {
-      decoded = decodeURIComponent(s)
-    } catch {
-      return true
-    }
-    return decoded === '.' || decoded === '..' || /[/\\]/.test(decoded)
-  })
-  if (unsafe) throw new ApiError(400, 'Endereço inválido', 'O endereço solicitado é inválido.')
+export function path(strings: TemplateStringsArray, ...values: (string | undefined)[]): string {
+  return strings.reduce((out, s, i) => {
+    if (i === values.length) return out + s
+    const v = values[i]
+    if (v === undefined || v === '' || v === '.' || v === '..') throw invalidPath()
+    return out + s + encodeURIComponent(v)
+  }, '')
+}
+
+/**
+ * Segunda barreira, no mesmo parser que o fetch usa: o caminho não pode ser reescrito pelo
+ * navegador (pontos, tabs) nem ter fragmento. A query, se houver, vem de qs().
+ */
+export function assertSafePath(p: string) {
+  const raw = `/api${p}`
+  if (/[\u0000-\u001f\u007f#\\]/.test(raw)) throw invalidPath()
+  const url = new URL(raw, 'http://x')
+  if (url.pathname !== raw.split('?')[0]) throw invalidPath()
 }
 
 /** fetch com cookie de sessão, CSRF automático e erros tipados. */
-export async function api<T>(path: string, { method = 'GET', body, form }: Options = {}): Promise<T> {
-  assertSafePath(path)
+export async function api<T>(url: string, { method = 'GET', body, form }: Options = {}): Promise<T> {
+  assertSafePath(url)
   const unsafe = method !== 'GET'
   const send = async () => {
     const headers: Record<string, string> = { Accept: 'application/json' }
     if (unsafe) headers['X-XSRF-TOKEN'] = csrfToken() ?? ''
     if (body !== undefined) headers['Content-Type'] = 'application/json'
-    return fetch(`/api${path}`, {
+    return fetch(`/api${url}`, {
       method,
       headers,
       credentials: 'include',
