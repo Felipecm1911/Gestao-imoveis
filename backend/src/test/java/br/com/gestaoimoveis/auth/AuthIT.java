@@ -82,21 +82,25 @@ class AuthIT extends IntegrationTest {
     }
 
     @Test
-    void distributedFailuresDoNotLockOutOwnerFromCleanIp() throws Exception {
+    void accountUnderAttackOnlyAcceptsKnownIps() throws Exception {
         String email = uniqueEmail();
         signup(email);
         String wrong = "{\"email\":\"%s\",\"password\":\"errada\"}".formatted(email);
         String right = "{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, PASSWORD);
+        // o dono já entrou antes deste IP
+        mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("192.168.1.50"))
+                        .contentType(MediaType.APPLICATION_JSON).content(right))
+                .andExpect(status().isOk());
         for (int i = 0; i < 20; i++) {
             mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("10.0.0." + i))
                             .contentType(MediaType.APPLICATION_JSON).content(wrong))
                     .andExpect(status().isUnauthorized());
         }
-        // IP que já errou fica bloqueado pelo limite da conta
-        mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("10.0.0.1"))
+        // atacante com IP novo, mesmo com a senha certa, fica bloqueado
+        mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("10.9.9.9"))
                         .contentType(MediaType.APPLICATION_JSON).content(right))
                 .andExpect(status().isTooManyRequests());
-        // o dono, de um IP limpo, entra normalmente
+        // o dono, no IP de costume, entra normalmente
         mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("192.168.1.50"))
                         .contentType(MediaType.APPLICATION_JSON).content(right))
                 .andExpect(status().isOk());

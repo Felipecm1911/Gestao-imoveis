@@ -53,11 +53,11 @@ public class AuthService {
     public CurrentUser login(String rawEmail, String password, String ip) {
         String email = Emails.normalize(rawEmail);
         Instant since = Instant.now().minus(WINDOW);
-        long ipFailures = attempts.countFailuresSince(email, ip, since);
-        // o limite por conta só pesa para IPs que já erraram: um terceiro não consegue trancar
-        // o dono da conta, que entra de um IP sem falhas
-        if (ipFailures >= MAX_FAILURES
-                || (ipFailures > 0 && attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT)) {
+        // conta sob ataque: só passam IPs onde essa conta já entrou com sucesso. O ataque distribuído
+        // para, e um terceiro não tranca o dono no IP de costume (IP novo espera a janela)
+        if (attempts.countFailuresSince(email, ip, since) >= MAX_FAILURES
+                || (attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT
+                        && !attempts.existsByEmailAndIpAndSuccessTrue(email, ip))) {
             throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS,
                     "Muitas tentativas. Aguarde 15 minutos e tente de novo.");
         }

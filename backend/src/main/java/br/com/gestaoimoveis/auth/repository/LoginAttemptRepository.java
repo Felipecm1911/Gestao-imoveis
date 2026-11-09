@@ -17,4 +17,6 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
 
     @Query("select count(a) from LoginAttempt a where a.email = ?1 and a.success = false and a.attemptedAt > ?2")
     long countFailuresSince(String email, Instant since);
+
+    boolean existsByEmailAndIpAndSuccessTrue(String email, String ip);
 }
