@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -48,6 +49,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail integrity(DataIntegrityViolationException e) {
         log.info("Violação de integridade: {}", e.getMostSpecificCause().getClass().getSimpleName());
         return problem(HttpStatus.CONFLICT, "Conflito", "Os dados conflitam com um registro existente.");
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    ProblemDetail badSort(PropertyReferenceException e) {
+        return problem(HttpStatus.BAD_REQUEST, "Ordenação inválida", "Campo de ordenação não suportado.");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
