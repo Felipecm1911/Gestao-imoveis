@@ -23,7 +23,7 @@ import br.com.gestaoimoveis.users.service.UserService;
 public class AuthService {
 
     static final int MAX_FAILURES = 5;
-    // limite por conta, de qualquer IP: freia ataque distribuído sem travar a conta por pouco
+    // limite por conta somando todos os IPs: freia ataque distribuído
     static final int MAX_FAILURES_PER_ACCOUNT = 20;
     static final Duration WINDOW = Duration.ofMinutes(15);
 
@@ -53,8 +53,11 @@ public class AuthService {
     public CurrentUser login(String rawEmail, String password, String ip) {
         String email = Emails.normalize(rawEmail);
         Instant since = Instant.now().minus(WINDOW);
-        if (attempts.countFailuresSince(email, ip, since) >= MAX_FAILURES
-                || attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT) {
+        long ipFailures = attempts.countFailuresSince(email, ip, since);
+        // o limite por conta só pesa para IPs que já erraram: um terceiro não consegue trancar
+        // o dono da conta, que entra de um IP sem falhas
+        if (ipFailures >= MAX_FAILURES
+                || (ipFailures > 0 && attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT)) {
             throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS,
                     "Muitas tentativas. Aguarde 15 minutos e tente de novo.");
         }

@@ -82,6 +82,34 @@ class AuthIT extends IntegrationTest {
     }
 
     @Test
+    void distributedFailuresDoNotLockOutOwnerFromCleanIp() throws Exception {
+        String email = uniqueEmail();
+        signup(email);
+        String wrong = "{\"email\":\"%s\",\"password\":\"errada\"}".formatted(email);
+        String right = "{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, PASSWORD);
+        for (int i = 0; i < 20; i++) {
+            mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("10.0.0." + i))
+                            .contentType(MediaType.APPLICATION_JSON).content(wrong))
+                    .andExpect(status().isUnauthorized());
+        }
+        // IP que já errou fica bloqueado pelo limite da conta
+        mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("10.0.0.1"))
+                        .contentType(MediaType.APPLICATION_JSON).content(right))
+                .andExpect(status().isTooManyRequests());
+        // o dono, de um IP limpo, entra normalmente
+        mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("192.168.1.50"))
+                        .contentType(MediaType.APPLICATION_JSON).content(right))
+                .andExpect(status().isOk());
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor fromIp(String ip) {
+        return r -> {
+            r.setRemoteAddr(ip);
+            return r;
+        };
+    }
+
+    @Test
     void protectedRoutesNeedSessionAndCsrf() throws Exception {
         mvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content("{}"))
