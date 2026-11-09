@@ -42,8 +42,27 @@ async function toError(res: Response): Promise<ApiError> {
   }
 }
 
+/**
+ * IDs vêm da URL do navegador. Um link como /app/properties/..%2Fusers%2Fx%2Fdeactivate faria
+ * uma ação (com CSRF) bater em outra rota da API. Barra aqui, para todos os chamadores.
+ */
+export function assertSafePath(path: string) {
+  const segments = path.split(/[?#]/)[0].split('/')
+  const unsafe = segments.some((s) => {
+    let decoded: string
+    try {
+      decoded = decodeURIComponent(s)
+    } catch {
+      return true
+    }
+    return decoded === '.' || decoded === '..' || /[/\\]/.test(decoded)
+  })
+  if (unsafe) throw new ApiError(400, 'Endereço inválido', 'O endereço solicitado é inválido.')
+}
+
 /** fetch com cookie de sessão, CSRF automático e erros tipados. */
 export async function api<T>(path: string, { method = 'GET', body, form }: Options = {}): Promise<T> {
+  assertSafePath(path)
   const unsafe = method !== 'GET'
   const send = async () => {
     const headers: Record<string, string> = { Accept: 'application/json' }
