@@ -1,5 +1,7 @@
 package br.com.gestaoimoveis.auth.domain;
 
+import br.com.gestaoimoveis.shared.security.Emails;
+
 import java.time.Instant;
 
 import jakarta.persistence.Entity;
@@ -21,7 +23,7 @@ public class LoginAttempt {
     protected LoginAttempt() {}
 
     public LoginAttempt(String email, String ip, boolean success) {
-        this.email = email.trim().toLowerCase();
+        this.email = Emails.normalize(email);
         this.ip = ip;
         this.success = success;
     }

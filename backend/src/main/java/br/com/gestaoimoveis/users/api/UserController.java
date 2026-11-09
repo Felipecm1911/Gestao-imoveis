@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.gestaoimoveis.shared.security.CurrentUser;
 import br.com.gestaoimoveis.users.api.UserDtos.CreateUserRequest;
 import br.com.gestaoimoveis.users.api.UserDtos.UpdateUserRequest;
 import br.com.gestaoimoveis.users.api.UserDtos.UserResponse;
@@ -45,7 +46,12 @@ class UserController {
 
     @PatchMapping("/{id}")
     UserResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest req) {
-        return service.update(id, req);
+        UserResponse updated = service.update(id, req);
+        // perfil e nome ficam guardados na sessão: força novo login para valerem os dados atuais
+        if (!id.equals(CurrentUser.get().userId())) {
+            service.revokeSessions(id);
+        }
+        return updated;
     }
 
     @PostMapping("/{id}/deactivate")

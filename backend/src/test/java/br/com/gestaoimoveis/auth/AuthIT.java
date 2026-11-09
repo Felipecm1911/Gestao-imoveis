@@ -68,8 +68,10 @@ class AuthIT extends IntegrationTest {
     void tooManyFailuresAreThrottled() throws Exception {
         String email = uniqueEmail();
         signup(email);
-        String body = "{\"email\":\"%s\",\"password\":\"errada\"}".formatted(email);
-        for (int i = 0; i < 5; i++) {
+        // variações do mesmo e-mail contam juntas
+        String[] variants = {email, email.toUpperCase(), " " + email, email + " ", " " + email.toUpperCase() + " "};
+        for (String variant : variants) {
+            String body = "{\"email\":\"%s\",\"password\":\"errada\"}".formatted(variant);
             mvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body))
                     .andExpect(status().isUnauthorized());
         }
@@ -113,6 +115,29 @@ class AuthIT extends IntegrationTest {
         mvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"%s\"}".formatted(staffEmail, PASSWORD)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void demotedAdminLosesSessionImmediately() throws Exception {
+        Cookie admin = signup();
+        String otherEmail = uniqueEmail();
+        String id = com.jayway.jsonpath.JsonPath.read(mvc.perform(post("/api/users").with(csrf()).cookie(admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Duda","email":"%s","password":"%s","role":"ADMIN"}"""
+                                .formatted(otherEmail, PASSWORD)))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), "$.id");
+        Cookie other = login(otherEmail, PASSWORD);
+        mvc.perform(get("/api/users").cookie(other)).andExpect(status().isOk());
+
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/users/" + id)
+                        .with(csrf()).cookie(admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Duda\",\"role\":\"STAFF\"}"))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/api/users").cookie(other)).andExpect(status().isUnauthorized());
+        Cookie again = login(otherEmail, PASSWORD);
+        mvc.perform(get("/api/users").cookie(again)).andExpect(status().isForbidden());
     }
 
     @Test

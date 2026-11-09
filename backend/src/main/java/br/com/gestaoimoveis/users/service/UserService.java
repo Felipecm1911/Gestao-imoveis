@@ -1,5 +1,7 @@
 package br.com.gestaoimoveis.users.service;
 
+import br.com.gestaoimoveis.shared.security.Emails;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,7 +44,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<AppUser> findForLogin(String email) {
         tenantSession.setLoginEmail(email);
-        return repository.findByEmail(email.trim().toLowerCase());
+        return repository.findByEmail(Emails.normalize(email));
     }
 
     /** Cria o primeiro ADMIN junto com a organização (a transação já está na organização nova). */

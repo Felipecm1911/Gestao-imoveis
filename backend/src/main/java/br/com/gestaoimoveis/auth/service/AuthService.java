@@ -15,6 +15,7 @@ import br.com.gestaoimoveis.auth.repository.LoginAttemptRepository;
 import br.com.gestaoimoveis.organizations.service.OrganizationService;
 import br.com.gestaoimoveis.shared.error.BusinessException;
 import br.com.gestaoimoveis.shared.security.CurrentUser;
+import br.com.gestaoimoveis.shared.security.Emails;
 import br.com.gestaoimoveis.users.domain.AppUser;
 import br.com.gestaoimoveis.users.service.UserService;
 
@@ -22,6 +23,8 @@ import br.com.gestaoimoveis.users.service.UserService;
 public class AuthService {
 
     static final int MAX_FAILURES = 5;
+    // limite por conta, de qualquer IP: freia ataque distribuído sem travar a conta por pouco
+    static final int MAX_FAILURES_PER_ACCOUNT = 20;
     static final Duration WINDOW = Duration.ofMinutes(15);
 
     private final OrganizationService organizations;
@@ -47,8 +50,11 @@ public class AuthService {
     }
 
     /** Cada tentativa é gravada na própria transação, para o registro de falha não ser desfeito. */
-    public CurrentUser login(String email, String password, String ip) {
-        if (attempts.countFailuresSince(email, ip, Instant.now().minus(WINDOW)) >= MAX_FAILURES) {
+    public CurrentUser login(String rawEmail, String password, String ip) {
+        String email = Emails.normalize(rawEmail);
+        Instant since = Instant.now().minus(WINDOW);
+        if (attempts.countFailuresSince(email, ip, since) >= MAX_FAILURES
+                || attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT) {
             throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS,
                     "Muitas tentativas. Aguarde 15 minutos e tente de novo.");
         }

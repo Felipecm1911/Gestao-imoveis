@@ -1,5 +1,7 @@
 package br.com.gestaoimoveis.users.domain;
 
+import br.com.gestaoimoveis.shared.security.Emails;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -41,7 +43,7 @@ public class AppUser {
 
     public AppUser(UUID organizationId, String email, String passwordHash, String name, Role role) {
         this.organizationId = organizationId;
-        this.email = email.trim().toLowerCase();
+        this.email = Emails.normalize(email);
         this.passwordHash = passwordHash;
         this.name = name.trim();
         this.role = role;

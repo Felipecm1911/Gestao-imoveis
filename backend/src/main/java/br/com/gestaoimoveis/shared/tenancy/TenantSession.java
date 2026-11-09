@@ -1,5 +1,7 @@
 package br.com.gestaoimoveis.shared.tenancy;
 
+import br.com.gestaoimoveis.shared.security.Emails;
+
 import java.util.UUID;
 
 import jakarta.persistence.EntityManager;
@@ -26,7 +28,7 @@ public class TenantSession {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void setLoginEmail(String email) {
-        set(em, "app.login_email", email.trim().toLowerCase());
+        set(em, "app.login_email", Emails.normalize(email));
     }
 
     static void set(EntityManager target, String key, String value) {
