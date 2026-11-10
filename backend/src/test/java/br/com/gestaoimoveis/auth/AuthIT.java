@@ -44,9 +44,10 @@ class AuthIT extends IntegrationTest {
         try (var pool = Executors.newFixedThreadPool(10)) {
             for (var f : pool.invokeAll(calls)) statuses.add(f.get());
         }
-        // sem a trava por e-mail, os 10 pedidos simultâneos testariam 10 senhas
-        assertThat(statuses).filteredOn(s -> s == 401).hasSize(5);
-        assertThat(statuses).filteredOn(s -> s == 429).hasSize(5);
+        // sem a trava por e-mail, os 10 pedidos simultâneos testariam 10 senhas; com ela, os que chegam
+        // enquanto outro login da conta está em andamento recebem 429 na hora
+        assertThat(statuses).allMatch(s -> s == 401 || s == 429);
+        assertThat(statuses).filteredOn(s -> s == 401).hasSizeBetween(1, 5);
     }
 
     @Test

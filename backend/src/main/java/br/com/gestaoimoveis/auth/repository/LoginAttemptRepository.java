@@ -21,9 +21,12 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
 
     boolean existsByEmailAndIpAndSuccessTrue(String email, String ip);
 
-    /** Fila por e-mail até o fim da transação: contar falhas e gravar a tentativa viram um passo só. */
-    @Query(value = "select 1 from (select pg_advisory_xact_lock(hashtext(?1))) l", nativeQuery = true)
-    int lockEmail(String email);
+    /**
+     * Trava por e-mail até o fim da transação, sem esperar: false se outro login do mesmo e-mail está em
+     * andamento. Esperar seguraria uma conexão do pool por pedido e um ataque em paralelo travaria o sistema.
+     */
+    @Query(value = "select pg_try_advisory_xact_lock(hashtext(?1))", nativeQuery = true)
+    boolean tryLockEmail(String email);
 
     // os sucessos ficam: a regra de "IP conhecido" depende deles
     @Modifying

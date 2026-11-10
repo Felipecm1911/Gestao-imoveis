@@ -52,17 +52,18 @@ public class AuthService {
     }
 
     /**
-     * Uma transação por tentativa, travada pelo e-mail: pedidos em paralelo esperam a vez e veem as
-     * falhas uns dos outros. noRollbackFor mantém a falha gravada mesmo com o 401/429.
+     * Uma transação por tentativa, travada pelo e-mail: um segundo login simultâneo da mesma conta
+     * recebe 429 na hora, então contar falhas e gravar a tentativa nunca correm em paralelo.
+     * noRollbackFor mantém a falha gravada mesmo com o 401/429.
      */
     @Transactional(noRollbackFor = BusinessException.class)
     public CurrentUser login(String rawEmail, String password, String ip) {
         String email = Emails.normalize(rawEmail);
-        attempts.lockEmail(email);
         Instant since = Instant.now().minus(WINDOW);
         // conta sob ataque: só passam IPs onde essa conta já entrou com sucesso. O ataque distribuído
         // para, e um terceiro não tranca o dono no IP de costume (IP novo espera a janela)
-        if (attempts.countFailuresSince(email, ip, since) >= MAX_FAILURES
+        if (!attempts.tryLockEmail(email)
+                || attempts.countFailuresSince(email, ip, since) >= MAX_FAILURES
                 || (attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT
                         && !attempts.existsByEmailAndIpAndSuccessTrue(email, ip))) {
             throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS,
