@@ -2,7 +2,7 @@
 
 SaaS para pequenas imobiliárias e administradores de imóveis: imóveis, proprietários, inquilinos, contratos, cobranças, pagamentos, manutenção, documentos e relatórios, com portais para proprietário e inquilino.
 
-> 🚧 Em desenvolvimento. Fase atual e histórico: [docs/PROGRESSO.md](docs/PROGRESSO.md).
+> 🚧 Em desenvolvimento. Já funcionam: login, dashboard, imóveis com fotos e filtros, proprietários e usuários da equipe. Em seguida: inquilinos, contratos e financeiro.
 
 ## Destaques técnicos
 
@@ -15,8 +15,8 @@ SaaS para pequenas imobiliárias e administradores de imóveis: imóveis, propri
 
 | | |
 |---|---|
-| Frontend | React, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, React Hook Form, Zod, Recharts |
-| Backend | Java 21, Spring Boot 3, Spring Security, Spring Data JPA, Flyway, OpenPDF, Springdoc |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, React Hook Form, Zod |
+| Backend | Java 21, Spring Boot 4, Spring Security, Spring Session, Spring Data JPA, Flyway |
 | Banco | PostgreSQL 17 |
 | Testes | JUnit 5, Mockito, Testcontainers, Vitest, React Testing Library, Playwright |
 | Infra | Docker Compose, GitHub Actions |
@@ -32,7 +32,6 @@ docker compose up -d
 
 ## Documentação
 
-- [Plano técnico](docs/PLANO.md)
 - [Arquitetura](docs/ARQUITETURA.md)
 - [Requisitos](docs/REQUISITOS.md)
 - [Testes](docs/TESTES.md)

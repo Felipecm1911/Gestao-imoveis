@@ -64,7 +64,7 @@ Teste obrigatório: com dois tenants, cada endpoint de leitura e escrita é cham
 - `numeric(14,2)` no banco, `BigDecimal` na JVM, escala 2, `RoundingMode.HALF_EVEN`. Classe `Money` em `shared` concentra o arredondamento.
 - Saldo da parcela = `valor - Σ pagamentos não estornados`. O saldo é calculado na hora e não fica gravado. Assim não existe valor gravado que fique fora de sincronia.
 - Registro de pagamento numa transação com `SELECT ... FOR UPDATE` na parcela (evita pagar duas vezes em paralelo), mais `UNIQUE (organization_id, idempotency_key)`.
-- Parcelas: uma por mês-calendário de ocupação, vencendo no `due_day` do mês seguinte. A primeira e a última são proporcionais (`valor × dias_ocupados / dias_do_mês`). Regra completa na seção "Regras de negócio" do PLANO.md, item 6.
+- Parcelas: uma por mês-calendário de ocupação, vencendo no `due_day` do mês seguinte. A primeira e a última são proporcionais (`valor × dias_ocupados / dias_do_mês`). O vencimento no mês seguinte segue o padrão da Lei 8.245/91, art. 42. Exemplo: contrato de 15/01 a 14/01 do ano seguinte, dia 10 → 13 parcelas; a de janeiro vale 17/31 do aluguel e vence em 10/02.
 - Testcontainers usa a mesma imagem `postgres:17-alpine` e o mesmo `docker/postgres/01-roles.sh`. Os testes rodam como `app_user`, então o RLS também é testado.
 
 ### Contratos sem conflito

@@ -41,4 +41,4 @@ cd frontend && npx playwright test    # e2e (precisa da stack no ar: docker comp
 
 ## Resultados
 
-Os resultados de cada fase ficam registrados em [PROGRESSO.md](PROGRESSO.md), sempre com a saída real dos comandos.
+Os testes rodam no CI (GitHub Actions) a cada push.
