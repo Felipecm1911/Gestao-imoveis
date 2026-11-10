@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatBRL, formatDocument, parseDecimalInput } from './format'
+import { formatBRL, formatDocument, formatPhone, parseDecimalInput } from './format'
 
 describe('parseDecimalInput', () => {
   it.each([
@@ -28,5 +28,13 @@ describe('formatação', () => {
   it('formata CPF e CNPJ', () => {
     expect(formatDocument('52998224725')).toBe('529.982.247-25')
     expect(formatDocument('11222333000181')).toBe('11.222.333/0001-81')
+  })
+})
+
+describe('formatPhone', () => {
+  it('formata celular e fixo, mantém o resto', () => {
+    expect(formatPhone('11987654321')).toBe('(11) 98765-4321')
+    expect(formatPhone('1133445566')).toBe('(11) 3344-5566')
+    expect(formatPhone('123')).toBe('123')
   })
 })

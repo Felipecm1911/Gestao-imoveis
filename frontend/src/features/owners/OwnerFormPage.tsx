@@ -46,17 +46,17 @@ export function OwnerFormPage() {
   return (
     <>
       <PageHeader title={id ? 'Editar proprietário' : 'Novo proprietário'} />
-      <form onSubmit={onSubmit} noValidate className="grid max-w-3xl gap-6">
+      <form onSubmit={onSubmit} noValidate className="grid max-w-4xl gap-5">
         <FormError error={save.error} />
-        <fieldset className="grid gap-4 sm:grid-cols-2">
-          <legend className="mb-2 font-medium">Dados</legend>
+        <fieldset className="grid gap-4 rounded-xl border bg-card p-5 shadow-xs sm:grid-cols-2">
+          <legend className="float-left col-span-full mb-1 text-base font-semibold">Dados</legend>
           {text('name', 'Nome completo ou razão social', { autoComplete: 'name' }, 'sm:col-span-2')}
           {text('document', 'CPF ou CNPJ', { inputMode: 'numeric' })}
           {text('phone', 'Telefone', { inputMode: 'tel', autoComplete: 'tel' })}
           {text('email', 'E-mail', { type: 'email', autoComplete: 'email' }, 'sm:col-span-2')}
         </fieldset>
-        <fieldset className="grid gap-4 sm:grid-cols-6">
-          <legend className="mb-2 font-medium">Endereço (opcional)</legend>
+        <fieldset className="grid gap-4 rounded-xl border bg-card p-5 shadow-xs sm:grid-cols-6">
+          <legend className="float-left col-span-full mb-1 text-base font-semibold">Endereço (opcional)</legend>
           {text('zip', 'CEP', { inputMode: 'numeric' }, 'sm:col-span-2')}
           {text('street', 'Rua', {}, 'sm:col-span-4')}
           {text('number', 'Número', {}, 'sm:col-span-1')}
@@ -65,9 +65,12 @@ export function OwnerFormPage() {
           {text('city', 'Cidade', {}, 'sm:col-span-4')}
           {text('state', 'UF', { maxLength: 2 }, 'sm:col-span-2')}
         </fieldset>
-        <Field label="Dados bancários / PIX (opcional)" error={errors.bankInfo?.message}>
-          {(p) => <Textarea rows={2} {...p} {...form.register('bankInfo')} />}
-        </Field>
+        <fieldset className="grid gap-4 rounded-xl border bg-card p-5 shadow-xs">
+          <legend className="float-left col-span-full mb-1 text-base font-semibold">Repasse</legend>
+          <Field label="Dados bancários / PIX (opcional)" error={errors.bankInfo?.message}>
+            {(p) => <Textarea rows={2} {...p} {...form.register('bankInfo')} />}
+          </Field>
+        </fieldset>
         <div className="flex gap-2">
           <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Salvando…' : 'Salvar'}</Button>
           <Button type="button" variant="outline" onClick={() => navigate('/app/owners')}>Cancelar</Button>

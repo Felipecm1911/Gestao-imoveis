@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Navigate } from 'react-router'
-import { Plus } from 'lucide-react'
+import { Bell, Building2, Plug, Plus, Users as UsersIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { applyServerErrors, Field, FormError } from '@/components/form'
@@ -15,8 +15,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useMe } from '@/features/auth/api'
 import { ApiError } from '@/lib/api'
+import { initials } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { useCreateUser, useDeactivateUser, useUsers, type User } from './api'
 import { newUserSchema, type NewUserForm } from './schemas'
+
+// seções de uma próxima fase: visíveis, mas desabilitadas
+const settingsSoon = [
+  { label: 'Empresa', icon: Building2 },
+  { label: 'Notificações', icon: Bell },
+  { label: 'Integrações', icon: Plug },
+]
 
 function NewUserDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const create = useCreateUser()
@@ -61,7 +70,7 @@ function NewUserDialog({ open, onClose }: { open: boolean; onClose: () => void }
               )} />
             )}
           </Field>
-          <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Criando…' : 'Criar usuário'}</Button>
+          <Button type="submit" variant="brand" disabled={isSubmitting}>{isSubmitting ? 'Criando…' : 'Criar usuário'}</Button>
         </form>
       </DialogContent>
     </Dialog>
@@ -80,11 +89,26 @@ export function UsersPage() {
 
   return (
     <>
-      <PageHeader
-        title="Usuários"
-        description="Quem acessa o sistema da sua imobiliária."
-        actions={<Button onClick={() => setCreating(true)}><Plus /> Novo usuário</Button>}
-      />
+      <PageHeader title="Configurações" description="Gerencie a sua imobiliária e quem acessa o sistema." />
+      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <nav aria-label="Seções de configurações" className="flex gap-1 overflow-x-auto rounded-xl border bg-card p-2 shadow-xs lg:grid lg:content-start">
+        <span aria-current="page" className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium whitespace-nowrap text-accent-foreground">
+          <UsersIcon className="size-4" aria-hidden /> Usuários e permissões
+        </span>
+        {settingsSoon.map(({ label, icon: Icon }) => (
+          <span key={label} aria-disabled="true" title="Em breve" className="flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap text-muted-foreground opacity-60">
+            <Icon className="size-4" aria-hidden /> {label}
+          </span>
+        ))}
+      </nav>
+      <section aria-labelledby="users-title" className="min-w-0">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="users-title" className="text-lg font-semibold">Usuários e permissões</h2>
+          <p className="text-sm text-muted-foreground">Quem acessa o sistema da sua imobiliária.</p>
+        </div>
+        <Button variant="brand" onClick={() => setCreating(true)}><Plus /> Novo usuário</Button>
+      </div>
       {users.isPending ? (
         <LoadingRows />
       ) : users.isError ? (
@@ -92,7 +116,7 @@ export function UsersPage() {
       ) : users.data.length === 0 ? (
         <EmptyState title="Nenhum usuário" />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card">
+        <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
           <Table>
             <TableHeader className="bg-muted/60">
               <TableRow>
@@ -106,11 +130,23 @@ export function UsersPage() {
             <TableBody>
               {users.data.map((u) => (
                 <TableRow key={u.id}>
-                  <TableCell className="font-medium">{u.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="flex items-center gap-3">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground" aria-hidden>
+                        {initials(u.name)}
+                      </span>
+                      {u.name}
+                    </span>
+                  </TableCell>
                   <TableCell className="hidden sm:table-cell">{u.email}</TableCell>
                   <TableCell>{u.role === 'ADMIN' ? 'Administrador' : 'Equipe'}</TableCell>
                   <TableCell>
-                    <Badge variant={u.active ? 'secondary' : 'outline'}>{u.active ? 'Ativo' : 'Desativado'}</Badge>
+                    <Badge className={cn('gap-1.5 rounded-full border-transparent', u.active
+                      ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200'
+                      : 'bg-muted text-muted-foreground')}>
+                      <i className={cn('size-1.5 rounded-full', u.active ? 'bg-emerald-600' : 'bg-muted-foreground')} aria-hidden />
+                      {u.active ? 'Ativo' : 'Desativado'}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     {u.active && u.id !== myId && (
@@ -123,6 +159,8 @@ export function UsersPage() {
           </Table>
         </div>
       )}
+      </section>
+      </div>
       <NewUserDialog open={creating} onClose={() => setCreating(false)} />
       <ConfirmDialog
         open={!!toDeactivate}

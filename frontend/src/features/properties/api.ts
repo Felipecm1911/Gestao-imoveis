@@ -118,3 +118,11 @@ export function useSetCover(id: string) {
     api<Property>(path`/properties/${id}/photos/${photoId}/cover`, { method: 'PUT' }),
   )
 }
+
+/** Total por situação para os cards de resumo (size=1: só o totalElements interessa). */
+export function usePropertyCount(status?: PropertyStatus) {
+  return useQuery({
+    queryKey: [...key, 'list', 'count', status ?? 'all'],
+    queryFn: () => api<Page<PropertyListItem>>(`/properties${qs({ status, size: 1 })}`).then((p) => p.totalElements),
+  })
+}

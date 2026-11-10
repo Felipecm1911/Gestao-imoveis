@@ -61,10 +61,10 @@ export function PropertyFormPage() {
   return (
     <>
       <PageHeader title={id ? 'Editar imóvel' : 'Novo imóvel'} />
-      <form onSubmit={onSubmit} noValidate className="grid max-w-3xl gap-6">
+      <form onSubmit={onSubmit} noValidate className="grid max-w-4xl gap-5">
         <FormError error={save.error} />
-        <fieldset className="grid gap-4 sm:grid-cols-6">
-          <legend className="mb-2 font-medium">Identificação</legend>
+        <fieldset className="grid gap-4 rounded-xl border bg-card p-5 shadow-xs sm:grid-cols-6">
+          <legend className="float-left col-span-full mb-1 text-base font-semibold">Identificação</legend>
           <Field label="Proprietário" error={errors.ownerId?.message} className="sm:col-span-4">
             {(p) => (
               <Controller
@@ -104,8 +104,8 @@ export function PropertyFormPage() {
           </Field>
         </fieldset>
 
-        <fieldset className="grid gap-4 sm:grid-cols-6">
-          <legend className="mb-2 font-medium">Endereço</legend>
+        <fieldset className="grid gap-4 rounded-xl border bg-card p-5 shadow-xs sm:grid-cols-6">
+          <legend className="float-left col-span-full mb-1 text-base font-semibold">Endereço</legend>
           {text('zip', 'CEP', 'sm:col-span-2', { inputMode: 'numeric' })}
           {text('street', 'Rua', 'sm:col-span-4')}
           {text('number', 'Número', 'sm:col-span-1')}
@@ -115,8 +115,8 @@ export function PropertyFormPage() {
           {text('state', 'UF', 'sm:col-span-2', { maxLength: 2 })}
         </fieldset>
 
-        <fieldset className="grid gap-4 grid-cols-2 sm:grid-cols-5">
-          <legend className="mb-2 font-medium">Características e valor</legend>
+        <fieldset className="grid gap-4 rounded-xl border bg-card p-5 shadow-xs grid-cols-2 sm:grid-cols-5">
+          <legend className="float-left col-span-full mb-1 text-base font-semibold">Características e valor</legend>
           {text('areaM2', 'Área (m²)', '', { inputMode: 'decimal' })}
           {text('bedrooms', 'Quartos', '', { inputMode: 'numeric' })}
           {text('bathrooms', 'Banheiros', '', { inputMode: 'numeric' })}

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router'
 import { applyServerErrors, Field, FormError } from '@/components/form'
 import { Button } from '@/components/ui/button'
+import { PasswordInput } from '@/components/PasswordInput'
 import { Input } from '@/components/ui/input'
 import { AuthShell } from './AuthShell'
 import { useSignup } from './api'
@@ -28,9 +29,9 @@ export function SignupPage() {
 
   return (
     <AuthShell
-      title="Cadastre sua imobiliária"
-      description="Você será o administrador da conta."
-      footer={<>Já tem conta? <Link className="underline" to="/login">Entrar</Link></>}
+      title="Crie sua conta na Imobly"
+      description="Comece a gestão da sua imobiliária agora."
+      footer={<>Já tem uma conta? <Link className="font-medium text-brand-solid hover:underline dark:text-brand" to="/login">Fazer login</Link></>}
     >
       <form className="grid gap-4" onSubmit={onSubmit} noValidate>
         <FormError error={signup.error} />
@@ -44,9 +45,9 @@ export function SignupPage() {
           {(p) => <Input type="email" autoComplete="email" {...p} {...form.register('email')} />}
         </Field>
         <Field label="Senha" error={errors.password?.message}>
-          {(p) => <Input type="password" autoComplete="new-password" {...p} {...form.register('password')} />}
+          {(p) => <PasswordInput autoComplete="new-password" {...p} {...form.register('password')} />}
         </Field>
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Criando conta…' : 'Criar conta'}</Button>
+        <Button type="submit" variant="brand" size="lg" className="mt-1" disabled={isSubmitting}>{isSubmitting ? 'Criando conta…' : 'Criar conta'}</Button>
       </form>
     </AuthShell>
   )

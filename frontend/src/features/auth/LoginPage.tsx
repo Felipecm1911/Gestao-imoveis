@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router'
 import { applyServerErrors, Field, FormError } from '@/components/form'
 import { Button } from '@/components/ui/button'
+import { PasswordInput } from '@/components/PasswordInput'
 import { Input } from '@/components/ui/input'
 import { AuthShell } from './AuthShell'
 import { useLogin } from './api'
@@ -25,9 +26,9 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      title="Entrar"
-      description="Acesse a gestão dos seus imóveis."
-      footer={<>Ainda não tem conta? <Link className="underline" to="/signup">Cadastre sua imobiliária</Link></>}
+      title="Acesse sua conta"
+      description="Entre para gerenciar seus imóveis e contratos."
+      footer={<>Não tem conta? <Link className="font-medium text-brand-solid hover:underline dark:text-brand" to="/signup">Criar conta</Link></>}
     >
       <form className="grid gap-4" onSubmit={onSubmit} noValidate>
         <FormError error={login.error} />
@@ -35,9 +36,9 @@ export function LoginPage() {
           {(p) => <Input type="email" autoComplete="email" {...p} {...form.register('email')} />}
         </Field>
         <Field label="Senha" error={errors.password?.message}>
-          {(p) => <Input type="password" autoComplete="current-password" {...p} {...form.register('password')} />}
+          {(p) => <PasswordInput autoComplete="current-password" {...p} {...form.register('password')} />}
         </Field>
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Entrando…' : 'Entrar'}</Button>
+        <Button type="submit" variant="brand" size="lg" className="mt-1" disabled={isSubmitting}>{isSubmitting ? 'Entrando…' : 'Entrar'}</Button>
       </form>
     </AuthShell>
   )

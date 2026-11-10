@@ -7,6 +7,7 @@
 
 @theme inline {
     --color-brand: var(--brand);
+    --color-brand-solid: var(--brand-solid);
     --color-success: var(--success);
     --color-warning: var(--warning);
     --font-heading: var(--font-sans);
@@ -72,6 +73,7 @@
     --input: #d9d0c3;
     --ring: #0f766e;
     --brand: #c96b4b;
+    --brand-solid: #b0553a; /* terracota escurecida: texto branco com contraste AA */
     --success: #2f855a;
     --warning: #b7791f;
     --chart-1: #0f766e;
@@ -110,6 +112,7 @@
     --input: rgb(255 255 255 / 16%);
     --ring: #2bb3a3;
     --brand: #e08a6b;
+    --brand-solid: #b0553a;
     --success: #48bb78;
     --warning: #ecb44c;
     --chart-1: #2bb3a3;

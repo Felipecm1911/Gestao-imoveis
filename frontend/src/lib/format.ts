@@ -34,7 +34,7 @@ export const propertyTypeLabel: Record<string, string> = {
 
 export const propertyStatusLabel: Record<string, string> = {
   DISPONIVEL: 'Disponível',
-  OCUPADO: 'Ocupado',
+  OCUPADO: 'Alugado',
   MANUTENCAO: 'Manutenção',
   INATIVO: 'Inativo',
 }
@@ -42,3 +42,11 @@ export const propertyStatusLabel: Record<string, string> = {
 /** "Mariana Albuquerque Costa" → "MA" */
 export const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+
+/** "11987654321" → "(11) 98765-4321"; "1133445566" → "(11) 3344-5566" */
+export function formatPhone(phone: string): string {
+  const d = phone.replace(/\D/g, '')
+  if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+  if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
+  return phone
+}

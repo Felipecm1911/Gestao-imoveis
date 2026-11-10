@@ -64,7 +64,7 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
 
   // detalhe + foto
   await expect(page.getByRole('heading', { name: 'Apartamento Centro' })).toBeVisible()
-  await expect(page.getByText('AP-0012')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Imóvel: AP-0012' })).toBeVisible()
   await expect(page.getByText('R$ 2.300,00')).toBeVisible()
   await page.locator('input[type=file]').setInputFiles({ name: 'sala.png', mimeType: 'image/png', buffer: PNG })
   await expect(page.getByText('Fotos (1/20)')).toBeVisible()
@@ -80,7 +80,11 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
   await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Imóveis' }).click()
   await expect(page.getByText('1 imóvel')).toBeVisible()
   await expect(page.locator('img[src^="/api/files/"]')).toBeVisible()
+  // no celular os filtros ficam numa folha
+  const mobile = (page.viewportSize()?.width ?? 1280) < 768
+  if (mobile) await page.getByRole('button', { name: 'Filtros' }).click()
   await page.getByLabel('Aluguel mínimo').fill('3000')
+  if (mobile) await page.keyboard.press('Escape')
   await expect(page.getByText('Nenhum imóvel com esses filtros')).toBeVisible()
   await page.getByRole('button', { name: 'Limpar filtros' }).click()
   await expect(page.getByText('1 imóvel')).toBeVisible()
@@ -88,7 +92,7 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
   // logout e login
   await page.getByRole('button', { name: /Ana Teste/ }).click()
   await page.getByRole('menuitem', { name: 'Sair' }).click()
-  await expect(page.getByRole('heading', { name: 'Entrar' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Acesse sua conta' })).toBeVisible()
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill('senha-errada')
   await page.getByRole('button', { name: 'Entrar' }).click()

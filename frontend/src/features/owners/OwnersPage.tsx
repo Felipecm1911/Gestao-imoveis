@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Pagination } from '@/components/Pagination'
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ApiError } from '@/lib/api'
-import { formatDocument, initials } from '@/lib/format'
+import { formatDocument, formatPhone, initials } from '@/lib/format'
 import { useDeleteOwner, useOwners, type Owner } from './api'
 
 export function OwnersPage() {
@@ -26,20 +26,25 @@ export function OwnersPage() {
     <>
       <PageHeader
         title="Proprietários"
-        description="Donos dos imóveis administrados."
+        description={owners.data ? `${owners.data.totalElements} ${owners.data.totalElements === 1 ? 'registrado' : 'registrados'}` : 'Donos dos imóveis administrados.'}
         actions={
-          <Button asChild>
+          <Button variant="brand" asChild>
             <Link to="/app/owners/new"><Plus /> Novo proprietário</Link>
           </Button>
         }
       />
-      <Input
-        className="mb-4 max-w-sm bg-card"
-        placeholder="Buscar por nome ou CPF/CNPJ"
-        aria-label="Buscar proprietários"
-        defaultValue={q}
-        onChange={(e) => update({ q: e.target.value, page: '0' })}
-      />
+      <div className="mb-4 rounded-xl border bg-card p-3 shadow-xs">
+        <div className="relative max-w-md">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            className="pl-9"
+            placeholder="Buscar por nome, CPF/CNPJ…"
+            aria-label="Buscar proprietários"
+            defaultValue={q}
+            onChange={(e) => update({ q: e.target.value, page: '0' })}
+          />
+        </div>
+      </div>
 
       {owners.isPending ? (
         <LoadingRows />
@@ -49,34 +54,36 @@ export function OwnersPage() {
         <EmptyState
           title={q ? 'Nenhum proprietário encontrado' : 'Nenhum proprietário cadastrado'}
           description={q ? 'Tente outro termo de busca.' : 'Cadastre o primeiro proprietário para vincular imóveis.'}
-          action={!q && <Button asChild><Link to="/app/owners/new">Cadastrar proprietário</Link></Button>}
+          action={!q && <Button variant="brand" asChild><Link to="/app/owners/new"><Plus /> Cadastrar proprietário</Link></Button>}
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
             <Table>
               <TableHeader className="bg-muted/60">
                 <TableRow>
-                  <TableHead>Nome</TableHead>
+                  <TableHead className="pl-4">Nome</TableHead>
                   <TableHead>CPF/CNPJ</TableHead>
-                  <TableHead className="hidden md:table-cell">Contato</TableHead>
-                  <TableHead className="w-24"><span className="sr-only">Ações</span></TableHead>
+                  <TableHead className="hidden md:table-cell">E-mail</TableHead>
+                  <TableHead className="hidden lg:table-cell">Telefone</TableHead>
+                  <TableHead className="w-24 pr-4 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {owners.data.content.map((o) => (
                   <TableRow key={o.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="pl-4 font-medium">
                       <span className="flex items-center gap-3">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground" aria-hidden>
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground" aria-hidden>
                           {initials(o.name)}
                         </span>
                         {o.name}
                       </span>
                     </TableCell>
                     <TableCell>{formatDocument(o.document)}</TableCell>
-                    <TableCell className="hidden text-muted-foreground md:table-cell">{o.email ?? o.phone ?? '—'}</TableCell>
-                    <TableCell className="flex justify-end gap-1">
+                    <TableCell className="hidden text-muted-foreground md:table-cell">{o.email ?? '—'}</TableCell>
+                    <TableCell className="hidden text-muted-foreground lg:table-cell">{o.phone ? formatPhone(o.phone) : '—'}</TableCell>
+                    <TableCell className="flex justify-end gap-1 pr-4">
                       <Button variant="ghost" size="icon" asChild>
                         <Link to={`/app/owners/${o.id}/edit`} aria-label={`Editar ${o.name}`}><Pencil /></Link>
                       </Button>
@@ -89,7 +96,7 @@ export function OwnersPage() {
               </TableBody>
             </Table>
           </div>
-          <Pagination page={page} totalPages={owners.data.totalPages} onChange={(p) => update({ page: String(p) })} />
+          <Pagination page={page} totalPages={owners.data.totalPages} total={owners.data.totalElements} size={20} onChange={(p) => update({ page: String(p) })} />
         </>
       )}
 
