@@ -47,6 +47,8 @@ export function DashboardPage() {
   const recent = useProperties({ page: 0 })
 
   const pending = total.isPending || Object.values(counts).some((c) => c.isPending)
+  // uma contagem com erro estragaria a conta: mostra "—" em vez de um número falso
+  const failed = total.isError || Object.values(counts).some((c) => c.isError)
   const n = (s: keyof typeof counts) => counts[s].data ?? 0
   const active = (total.data ?? 0) - n('INATIVO')
   // ocupação = alugados sobre a carteira ativa (inativos não contam)
@@ -67,7 +69,7 @@ export function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi label="Imóveis" value={total.data} hint="na carteira" icon={Home} tone="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" pending={total.isPending} />
-        <Kpi label="Taxa de ocupação" value={`${occupancy.toLocaleString('pt-BR')}%`} hint={`${n('OCUPADO')} de ${active} ativos alugados`} icon={Percent} tone="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" pending={pending} />
+        <Kpi label="Taxa de ocupação" value={failed ? undefined : `${occupancy.toLocaleString('pt-BR')}%`} hint={failed ? 'não foi possível calcular' : `${n('OCUPADO')} de ${active} ativos alugados`} icon={Percent} tone="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" pending={pending} />
         <Kpi label="Proprietários" value={owners.data?.totalElements} hint="cadastrados" icon={Users} tone="bg-orange-100 text-brand-solid dark:bg-orange-950 dark:text-orange-300" pending={owners.isPending} />
         <Kpi label="Em manutenção" value={counts.MANUTENCAO.data} hint="imóveis parados" icon={Wrench} tone="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" pending={counts.MANUTENCAO.isPending} />
       </div>
@@ -75,8 +77,8 @@ export function DashboardPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <section aria-labelledby="status-title" className="rounded-xl border bg-card p-5 shadow-xs">
           <h2 id="status-title" className="font-semibold">Status dos imóveis</h2>
-          {total.isError ? (
-            <ErrorState error={total.error} onRetry={() => total.refetch()} />
+          {failed ? (
+            <ErrorState error={total.error ?? Object.values(counts).find((c) => c.isError)?.error} onRetry={() => [total, ...Object.values(counts)].forEach((c) => c.refetch())} />
           ) : pending ? (
             <Skeleton className="mx-auto mt-6 size-44 rounded-full" />
           ) : !total.data ? (

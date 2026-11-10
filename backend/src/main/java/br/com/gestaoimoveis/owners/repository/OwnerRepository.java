@@ -16,7 +16,8 @@ public interface OwnerRepository extends JpaRepository<Owner, UUID> {
 
     @Query("""
             select o from Owner o where o.organizationId = ?1
-            and (?2 = '' or lower(o.name) like concat('%', ?2, '%') or o.document like concat('%', ?2, '%'))
+            and (lower(o.name) like ?2 escape '\\' or o.document like ?2 escape '\\')
             """)
-    Page<Owner> search(UUID organizationId, String q, Pageable pageable);
+    /** pattern vem de Like.contains. */
+    Page<Owner> search(UUID organizationId, String pattern, Pageable pageable);
 }

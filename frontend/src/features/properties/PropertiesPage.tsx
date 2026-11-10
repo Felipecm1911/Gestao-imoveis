@@ -29,6 +29,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatBRL, parseDecimalInput, propertyStatusLabel, propertyTypeLabel } from '@/lib/format'
+import { useDebounced } from '@/lib/useDebounced'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { cn } from '@/lib/utils'
 import { usePropertyCount, useProperties, type PropertyFilters, type PropertyListItem, type PropertyStatus } from './api'
@@ -246,7 +247,10 @@ export function PropertiesPage() {
     maxRent: params.get('maxRent') ?? '',
     page: Number(params.get('page') ?? 0),
   }
-  const properties = useProperties(filters)
+  // texto digitado só vira consulta após uma pausa; o campo continua respondendo na hora
+  const q = useDebounced(filters.q)
+  const city = useDebounced(filters.city)
+  const properties = useProperties({ ...filters, q, city })
   const set = (name: keyof PropertyFilters | 'view', value: string) =>
     setParams({ ...Object.fromEntries(params), [name]: value, page: name === 'page' ? value : '0' }, { replace: true })
   const hasFilters = Object.entries(filters).some(([k, v]) => k !== 'page' && v)

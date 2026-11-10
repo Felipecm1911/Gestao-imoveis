@@ -3,8 +3,10 @@ package br.com.gestaoimoveis.auth.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,9 +51,14 @@ public class AuthService {
         return users.createAdmin(orgId, req.name(), req.email(), req.password()).toCurrentUser();
     }
 
-    /** Cada tentativa é gravada na própria transação, para o registro de falha não ser desfeito. */
+    /**
+     * Uma transação por tentativa, travada pelo e-mail: pedidos em paralelo esperam a vez e veem as
+     * falhas uns dos outros. noRollbackFor mantém a falha gravada mesmo com o 401/429.
+     */
+    @Transactional(noRollbackFor = BusinessException.class)
     public CurrentUser login(String rawEmail, String password, String ip) {
         String email = Emails.normalize(rawEmail);
+        attempts.lockEmail(email);
         Instant since = Instant.now().minus(WINDOW);
         // conta sob ataque: só passam IPs onde essa conta já entrou com sucesso. O ataque distribuído
         // para, e um terceiro não tranca o dono no IP de costume (IP novo espera a janela)
@@ -69,5 +76,12 @@ public class AuthService {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos.");
         }
         return user.get().toCurrentUser();
+    }
+
+    /** Falhas fora da janela não servem para nada; sem isto a tabela cresce sem fim. */
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
+    @Transactional
+    public int purgeOldFailures() {
+        return attempts.deleteFailuresBefore(Instant.now().minus(WINDOW));
     }
 }

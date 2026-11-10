@@ -18,6 +18,7 @@ import br.com.gestaoimoveis.owners.repository.OwnerRepository;
 import br.com.gestaoimoveis.shared.error.BusinessException;
 import br.com.gestaoimoveis.shared.error.NotFoundException;
 import br.com.gestaoimoveis.shared.security.CurrentUser;
+import br.com.gestaoimoveis.shared.web.Like;
 import br.com.gestaoimoveis.shared.web.PageResponse;
 import br.com.gestaoimoveis.shared.web.Versions;
 
@@ -32,8 +33,7 @@ public class OwnerService {
 
     @Transactional(readOnly = true)
     public PageResponse<OwnerResponse> search(String q, Pageable pageable) {
-        String term = q == null ? "" : q.trim().toLowerCase();
-        return PageResponse.of(repository.search(org(), term, pageable), OwnerResponse::of);
+        return PageResponse.of(repository.search(org(), Like.contains(q), pageable), OwnerResponse::of);
     }
 
     @Transactional(readOnly = true)

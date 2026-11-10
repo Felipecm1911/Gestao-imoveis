@@ -37,7 +37,11 @@ public class FileService {
         this.storage = storage;
     }
 
-    /** Grava uma imagem (JPEG, PNG ou WebP). Se a transação falhar, o arquivo em disco é apagado. */
+    /**
+     * Grava uma imagem (JPEG, PNG ou WebP). Se a transação falhar, o arquivo em disco é apagado.
+     * shortcut: se o processo morrer entre gravar no disco e o commit, o arquivo fica órfão; criar uma
+     * limpeza de arquivos sem registro quando o armazenamento for para a nuvem (S3).
+     */
     @Transactional(propagation = Propagation.MANDATORY)
     public StoredFile storeImage(MultipartFile upload) {
         FileType type = detect(upload);

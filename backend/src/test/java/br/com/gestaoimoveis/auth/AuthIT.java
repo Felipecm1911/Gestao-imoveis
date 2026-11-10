@@ -7,6 +7,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+
 import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.Test;
@@ -15,11 +20,44 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import br.com.gestaoimoveis.IntegrationTest;
+import br.com.gestaoimoveis.auth.service.AuthService;
 
 class AuthIT extends IntegrationTest {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @Autowired
+    AuthService authService;
+
+    @Test
+    void parallelFailuresCannotSkipTheLimit() throws Exception {
+        String email = uniqueEmail();
+        signup(email);
+        String wrong = "{\"email\":\"%s\",\"password\":\"errada\"}".formatted(email);
+        List<Callable<Integer>> calls = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            calls.add(() -> mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("172.16.0.1"))
+                    .contentType(MediaType.APPLICATION_JSON).content(wrong)).andReturn().getResponse().getStatus());
+        }
+        List<Integer> statuses = new ArrayList<>();
+        try (var pool = Executors.newFixedThreadPool(10)) {
+            for (var f : pool.invokeAll(calls)) statuses.add(f.get());
+        }
+        // sem a trava por e-mail, os 10 pedidos simultâneos testariam 10 senhas
+        assertThat(statuses).filteredOn(s -> s == 401).hasSize(5);
+        assertThat(statuses).filteredOn(s -> s == 429).hasSize(5);
+    }
+
+    @Test
+    void oldFailuresArePurgedButSuccessesStay() {
+        String email = uniqueEmail();
+        jdbc.update("insert into app.login_attempt (email, ip, attempted_at, success) values (?, '1.1.1.1', now() - interval '1 hour', false), (?, '1.1.1.1', now() - interval '1 hour', true), (?, '1.1.1.1', now(), false)",
+                email, email, email);
+        authService.purgeOldFailures();
+        assertThat(jdbc.queryForList("select success from app.login_attempt where email = ? order by attempted_at", Boolean.class, email))
+                .containsExactly(true, false);
+    }
 
     @Test
     void signupCreatesOrganizationAndLogsIn() throws Exception {

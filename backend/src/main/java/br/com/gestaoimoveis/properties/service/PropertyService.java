@@ -104,7 +104,7 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse addPhotos(UUID id, List<MultipartFile> uploads) {
-        Property p = load(id);
+        Property p = loadForUpdate(id);
         List<PropertyPhoto> gallery = photos.findByPropertyIdOrderByPosition(id);
         if (uploads == null || uploads.isEmpty()) {
             throw BusinessException.badRequest("Selecione ao menos uma foto.");
@@ -125,7 +125,7 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse deletePhoto(UUID id, UUID photoId) {
-        Property p = load(id);
+        Property p = loadForUpdate(id);
         List<PropertyPhoto> gallery = photos.findByPropertyIdOrderByPosition(id);
         PropertyPhoto photo = find(gallery, photoId);
         photos.delete(photo);
@@ -139,7 +139,7 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse setCover(UUID id, UUID photoId) {
-        Property p = load(id);
+        Property p = loadForUpdate(id);
         List<PropertyPhoto> gallery = photos.findByPropertyIdOrderByPosition(id);
         PropertyPhoto chosen = find(gallery, photoId);
         // tira a capa antiga antes de marcar a nova: o índice único parcial não aceita duas capas
@@ -175,6 +175,10 @@ public class PropertyService {
 
     private Property load(UUID id) {
         return properties.findByIdAndOrganizationId(id, org()).orElseThrow(() -> new NotFoundException("Imóvel"));
+    }
+
+    private Property loadForUpdate(UUID id) {
+        return properties.findForUpdate(id, org()).orElseThrow(() -> new NotFoundException("Imóvel"));
     }
 
     private static PropertyPhoto find(List<PropertyPhoto> gallery, UUID photoId) {

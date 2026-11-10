@@ -89,6 +89,14 @@ class PropertyIT extends IntegrationTest {
                 .andExpect(status().isConflict());
 
         mvc.perform(get("/api/properties?sort=senha,asc").cookie(session)).andExpect(status().isBadRequest());
+
+        // % e _ digitados são texto, não curinga
+        mvc.perform(get("/api/properties").param("q", "%").cookie(session))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/properties").param("q", "AP_0001").cookie(session))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/owners").param("q", "%").cookie(session))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test

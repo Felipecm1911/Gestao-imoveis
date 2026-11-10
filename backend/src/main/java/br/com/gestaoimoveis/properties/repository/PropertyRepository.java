@@ -4,15 +4,25 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 
 import br.com.gestaoimoveis.properties.domain.Property;
+import br.com.gestaoimoveis.shared.web.Like;
 
 public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSpecificationExecutor<Property> {
 
     Optional<Property> findByIdAndOrganizationId(UUID id, UUID organizationId);
+
+    /** Trava a linha até o fim da transação: operações na galeria do mesmo imóvel passam uma de cada vez. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Property p where p.id = ?1 and p.organizationId = ?2")
+    Optional<Property> findForUpdate(UUID id, UUID organizationId);
 
     record Filter(String q, String city, Property.Type type, Property.Status status, BigDecimal minRent,
             BigDecimal maxRent, UUID ownerId) {}
@@ -21,11 +31,11 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
         return (root, query, cb) -> {
             var p = cb.equal(root.get("organizationId"), organizationId);
             if (f.q() != null && !f.q().isBlank()) {
-                String like = "%" + f.q().trim().toLowerCase() + "%";
-                p = cb.and(p, cb.or(cb.like(cb.lower(root.get("title")), like),
-                        cb.like(cb.lower(root.get("code")), like),
-                        cb.like(cb.lower(root.get("district")), like),
-                        cb.like(cb.lower(root.get("street")), like)));
+                String like = Like.contains(f.q());
+                p = cb.and(p, cb.or(cb.like(cb.lower(root.get("title")), like, '\\'),
+                        cb.like(cb.lower(root.get("code")), like, '\\'),
+                        cb.like(cb.lower(root.get("district")), like, '\\'),
+                        cb.like(cb.lower(root.get("street")), like, '\\')));
             }
             if (f.city() != null && !f.city().isBlank()) {
                 p = cb.and(p, cb.equal(cb.lower(root.get("city")), f.city().trim().toLowerCase()));

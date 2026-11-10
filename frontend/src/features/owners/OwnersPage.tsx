@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ApiError } from '@/lib/api'
+import { useDebounced } from '@/lib/useDebounced'
 import { formatDocument, formatPhone, initials } from '@/lib/format'
 import { useDeleteOwner, useOwners, type Owner } from './api'
 
@@ -16,7 +17,7 @@ export function OwnersPage() {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const page = Number(params.get('page') ?? 0)
-  const owners = useOwners({ q, page })
+  const owners = useOwners({ q: useDebounced(q), page })
   const remove = useDeleteOwner()
   const [toDelete, setToDelete] = useState<Owner | null>(null)
 
