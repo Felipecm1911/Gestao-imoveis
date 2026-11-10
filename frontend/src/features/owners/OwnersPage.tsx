@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ApiError } from '@/lib/api'
-import { formatDocument } from '@/lib/format'
+import { formatDocument, initials } from '@/lib/format'
 import { useDeleteOwner, useOwners, type Owner } from './api'
 
 export function OwnersPage() {
@@ -34,7 +34,7 @@ export function OwnersPage() {
         }
       />
       <Input
-        className="mb-4 max-w-sm"
+        className="mb-4 max-w-sm bg-card"
         placeholder="Buscar por nome ou CPF/CNPJ"
         aria-label="Buscar proprietários"
         defaultValue={q}
@@ -53,9 +53,9 @@ export function OwnersPage() {
         />
       ) : (
         <>
-          <div className="rounded-lg border">
+          <div className="overflow-hidden rounded-xl border bg-card">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/60">
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>CPF/CNPJ</TableHead>
@@ -66,7 +66,14 @@ export function OwnersPage() {
               <TableBody>
                 {owners.data.content.map((o) => (
                   <TableRow key={o.id}>
-                    <TableCell className="font-medium">{o.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-3">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground" aria-hidden>
+                          {initials(o.name)}
+                        </span>
+                        {o.name}
+                      </span>
+                    </TableCell>
                     <TableCell>{formatDocument(o.document)}</TableCell>
                     <TableCell className="hidden text-muted-foreground md:table-cell">{o.email ?? o.phone ?? '—'}</TableCell>
                     <TableCell className="flex justify-end gap-1">

@@ -32,7 +32,7 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
 
   // proprietário, com erro de validação antes
   await openMenuIfMobile(page)
-  await page.getByRole('link', { name: 'Proprietários' }).click()
+  await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Proprietários' }).click()
   await page.getByRole('link', { name: 'Novo proprietário' }).click()
   await page.getByRole('button', { name: 'Salvar' }).click()
   await expect(page.getByText('Informe o nome')).toBeVisible()
@@ -45,7 +45,7 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
 
   // imóvel
   await openMenuIfMobile(page)
-  await page.getByRole('link', { name: 'Imóveis' }).click()
+  await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Imóveis' }).click()
   await page.getByRole('link', { name: 'Novo imóvel' }).first().click()
   await page.getByLabel('Proprietário').click()
   await page.getByRole('option', { name: 'Maria Proprietária' }).click()
@@ -77,7 +77,7 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
 
   // lista com capa e filtros
   await openMenuIfMobile(page)
-  await page.getByRole('link', { name: 'Imóveis' }).click()
+  await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Imóveis' }).click()
   await expect(page.getByText('1 imóvel')).toBeVisible()
   await expect(page.locator('img[src^="/api/files/"]')).toBeVisible()
   await page.getByLabel('Aluguel mínimo').fill('3000')

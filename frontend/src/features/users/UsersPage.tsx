@@ -92,9 +92,9 @@ export function UsersPage() {
       ) : users.data.length === 0 ? (
         <EmptyState title="Nenhum usuário" />
       ) : (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/60">
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden sm:table-cell">E-mail</TableHead>

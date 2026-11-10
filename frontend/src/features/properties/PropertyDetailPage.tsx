@@ -114,14 +114,14 @@ export function PropertyDetailPage() {
     ['CEP', p.zip.replace(/(\d{5})(\d{3})/, '$1-$2')],
     ['Área', p.areaM2 !== null ? `${p.areaM2} m²` : '—'],
     ['Quartos · banheiros · vagas', `${p.bedrooms} · ${p.bathrooms} · ${p.parking}`],
-    ['Aluguel sugerido', formatBRL(p.suggestedRent)],
   ]
 
   return (
     <>
       <PageHeader
         title={p.title}
-        description={p.code}
+        badge={<StatusBadge status={p.status} />}
+        description={<><Link to="/app/properties" className="hover:underline">Imóveis</Link> › {p.code}</>}
         actions={
           <>
             <Button variant="outline" asChild><Link to={`/app/properties/${p.id}/edit`}><Pencil /> Editar</Link></Button>
@@ -132,12 +132,15 @@ export function PropertyDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <Gallery property={p} />
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardHeader>
             <CardTitle>Dados</CardTitle>
-            <StatusBadge status={p.status} />
           </CardHeader>
           <CardContent className="grid gap-4">
-            <dl className="grid gap-3 text-sm">
+            <div className="rounded-lg bg-accent p-4">
+              <p className="text-xs text-accent-foreground">Aluguel sugerido</p>
+              <p className="text-2xl font-semibold text-accent-foreground">{formatBRL(p.suggestedRent)}</p>
+            </div>
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
               {facts.map(([label, value]) => (
                 <div key={label}>
                   <dt className="text-muted-foreground">{label}</dt>

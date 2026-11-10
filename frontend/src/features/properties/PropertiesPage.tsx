@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from 'react-router'
-import { BedDouble, Bath, Car, ImageOff, Plus } from 'lucide-react'
+import { BedDouble, Bath, Car, ImageOff, MapPin, Plus } from 'lucide-react'
 import { Pagination } from '@/components/Pagination'
 import { EmptyState, ErrorState, PageHeader } from '@/components/states'
 import { Button } from '@/components/ui/button'
@@ -37,8 +37,8 @@ function FilterSelect({ label, value, options, onChange }: {
 function PropertyCard({ p }: { p: PropertyListItem }) {
   return (
     <Link to={`/app/properties/${p.id}`} className="group rounded-xl focus-visible:outline-2 focus-visible:outline-ring">
-      <Card className="h-full overflow-hidden pt-0 transition-shadow group-hover:shadow-md">
-        <div className="aspect-[4/3] bg-muted">
+      <Card className="h-full overflow-hidden pt-0 transition-all group-hover:-translate-y-0.5 group-hover:shadow-lg">
+        <div className="relative aspect-[3/2] bg-muted">
           {p.coverUrl ? (
             <img src={p.coverUrl} alt="" loading="lazy" className="size-full object-cover" />
           ) : (
@@ -46,21 +46,23 @@ function PropertyCard({ p }: { p: PropertyListItem }) {
               <ImageOff className="size-8" aria-hidden />
             </div>
           )}
+          <div className="absolute top-3 right-3"><StatusBadge status={p.status} /></div>
         </div>
         <CardContent className="grid gap-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-mono text-xs text-muted-foreground">{p.code}</span>
-            <StatusBadge status={p.status} />
-          </div>
-          <h2 className="truncate font-medium">{p.title}</h2>
-          <p className="truncate text-sm text-muted-foreground">{p.district}, {p.city}/{p.state}</p>
-          <p className="flex gap-3 text-sm text-muted-foreground">
+          <span className="text-xs font-semibold tracking-wide text-primary">{p.code} · {propertyTypeLabel[p.type]}</span>
+          <h2 className="truncate font-semibold">{p.title}</h2>
+          <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+            <MapPin className="size-3.5 shrink-0" aria-hidden />{p.district}, {p.city} – {p.state}
+          </p>
+          <p className="mt-1 flex gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1" title="Quartos"><BedDouble className="size-4" aria-hidden />{p.bedrooms}<span className="sr-only">quartos</span></span>
             <span className="flex items-center gap-1" title="Banheiros"><Bath className="size-4" aria-hidden />{p.bathrooms}<span className="sr-only">banheiros</span></span>
             <span className="flex items-center gap-1" title="Vagas"><Car className="size-4" aria-hidden />{p.parking}<span className="sr-only">vagas</span></span>
             {p.areaM2 !== null && <span>{p.areaM2} m²</span>}
           </p>
-          <p className="mt-1 text-lg font-semibold">{formatBRL(p.suggestedRent)}</p>
+          <p className="mt-2 border-t pt-3 text-lg font-semibold">
+            {formatBRL(p.suggestedRent)} <span className="text-sm font-normal text-muted-foreground">/mês</span>
+          </p>
         </CardContent>
       </Card>
     </Link>
@@ -87,9 +89,10 @@ export function PropertiesPage() {
     <>
       <PageHeader
         title="Imóveis"
+        description="Sua carteira de imóveis administrados."
         actions={<Button asChild><Link to="/app/properties/new"><Plus /> Novo imóvel</Link></Button>}
       />
-      <div className="mb-6 grid gap-2 sm:flex sm:flex-wrap">
+      <div className="mb-6 grid gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap">
         <Input className="sm:w-56" placeholder="Buscar código, título, rua…" aria-label="Buscar imóveis"
           defaultValue={filters.q} onChange={(e) => set('q', e.target.value)} />
         <Input className="sm:w-40" placeholder="Cidade" aria-label="Cidade" defaultValue={filters.city}
