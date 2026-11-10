@@ -139,10 +139,22 @@ class AuthIT extends IntegrationTest {
         mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("10.9.9.9"))
                         .contentType(MediaType.APPLICATION_JSON).content(right))
                 .andExpect(status().isTooManyRequests());
-        // o dono, no IP de costume, entra normalmente
-        mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("192.168.1.50"))
-                        .contentType(MediaType.APPLICATION_JSON).content(right))
-                .andExpect(status().isOk());
+        // o dono, no IP de costume, entra mesmo com o ataque disparando em paralelo:
+        // pedido já barrado pelo limite não disputa a trava do e-mail
+        List<Callable<Integer>> calls = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            String attacker = "10.1.0." + i;
+            calls.add(() -> mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp(attacker))
+                    .contentType(MediaType.APPLICATION_JSON).content(wrong)).andReturn().getResponse().getStatus());
+        }
+        calls.add(() -> mvc.perform(post("/api/auth/login").with(csrf()).with(fromIp("192.168.1.50"))
+                .contentType(MediaType.APPLICATION_JSON).content(right)).andReturn().getResponse().getStatus());
+        List<Integer> statuses = new ArrayList<>();
+        try (var pool = Executors.newFixedThreadPool(21)) {
+            for (var f : pool.invokeAll(calls)) statuses.add(f.get());
+        }
+        assertThat(statuses.getLast()).isEqualTo(200);
+        assertThat(statuses.subList(0, 20)).containsOnly(429);
     }
 
     private static org.springframework.test.web.servlet.request.RequestPostProcessor fromIp(String ip) {

@@ -52,22 +52,25 @@ public class AuthService {
     }
 
     /**
-     * Uma transação por tentativa, travada pelo e-mail: um segundo login simultâneo da mesma conta
-     * recebe 429 na hora, então contar falhas e gravar a tentativa nunca correm em paralelo.
+     * Uma transação por tentativa, travada pelo e-mail para contar falhas e gravar a tentativa nunca
+     * correrem em paralelo. O limite é conferido antes da trava (pedido barrado nem disputa a vez, então
+     * um atacante não ocupa a trava e o dono continua entrando do IP de costume) e de novo depois dela.
      * noRollbackFor mantém a falha gravada mesmo com o 401/429.
      */
     @Transactional(noRollbackFor = BusinessException.class)
     public CurrentUser login(String rawEmail, String password, String ip) {
         String email = Emails.normalize(rawEmail);
         Instant since = Instant.now().minus(WINDOW);
-        // conta sob ataque: só passam IPs onde essa conta já entrou com sucesso. O ataque distribuído
-        // para, e um terceiro não tranca o dono no IP de costume (IP novo espera a janela)
-        if (!attempts.tryLockEmail(email)
-                || attempts.countFailuresSince(email, ip, since) >= MAX_FAILURES
-                || (attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT
-                        && !attempts.existsByEmailAndIpAndSuccessTrue(email, ip))) {
+        if (limitHit(email, ip, since)) {
+            throw tooMany();
+        }
+        // não espera a trava: esperar seguraria uma conexão do pool por pedido
+        if (!attempts.tryLockEmail(email)) {
             throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Muitas tentativas. Aguarde 15 minutos e tente de novo.");
+                    "Já existe um login desta conta em andamento. Tente de novo em instantes.");
+        }
+        if (limitHit(email, ip, since)) {
+            throw tooMany();
         }
         Optional<AppUser> user = users.findForLogin(email);
         boolean ok = passwordEncoder.matches(password, user.map(AppUser::getPasswordHash).orElse(dummyHash))
@@ -77,6 +80,19 @@ public class AuthService {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos.");
         }
         return user.get().toCurrentUser();
+    }
+
+    // conta sob ataque: só passam IPs onde essa conta já entrou com sucesso. O ataque distribuído
+    // para, e um terceiro não tranca o dono no IP de costume (IP novo espera a janela)
+    private boolean limitHit(String email, String ip, Instant since) {
+        return attempts.countFailuresSince(email, ip, since) >= MAX_FAILURES
+                || (attempts.countFailuresSince(email, since) >= MAX_FAILURES_PER_ACCOUNT
+                        && !attempts.existsByEmailAndIpAndSuccessTrue(email, ip));
+    }
+
+    private static BusinessException tooMany() {
+        return new BusinessException(HttpStatus.TOO_MANY_REQUESTS,
+                "Muitas tentativas. Aguarde 15 minutos e tente de novo.");
     }
 
     /** Falhas fora da janela não servem para nada; sem isto a tabela cresce sem fim. */
