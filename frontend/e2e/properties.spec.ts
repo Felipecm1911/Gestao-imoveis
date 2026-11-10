@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import { openMenuIfMobile, signup } from './helpers'
 
 // PNG 1x1 válido: o backend confere os bytes, não a extensão
 const PNG = Buffer.from(
@@ -8,23 +9,6 @@ const PNG = Buffer.from(
 
 // CPF válido diferente por execução não é necessário: cada teste cria a própria organização
 const CPF = '529.982.247-25'
-
-async function signup(page: Page) {
-  const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@teste.com`
-  await page.goto('/signup')
-  await page.getByLabel('Nome da imobiliária').fill('Imobiliária E2E')
-  await page.getByLabel('Seu nome').fill('Ana Teste')
-  await page.getByLabel('E-mail').fill(email)
-  await page.getByLabel('Senha').fill('senha-forte-123')
-  await page.getByRole('button', { name: 'Criar conta' }).click()
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-  return email
-}
-
-async function openMenuIfMobile(page: Page) {
-  const menu = page.getByRole('button', { name: 'Abrir menu' })
-  if (await menu.isVisible()) await menu.click()
-}
 
 test('cadastro → proprietário → imóvel com foto → filtros → logout → login', async ({ page }) => {
   const email = await signup(page)

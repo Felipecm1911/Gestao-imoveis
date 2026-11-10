@@ -50,3 +50,56 @@ export function formatPhone(phone: string): string {
   if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
   return phone
 }
+
+/** "2025-01-10" → "10/01/2025". Sem passar por Date: o fuso não desloca o dia. */
+export const formatDate = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '—')
+
+const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+/** "2025-01-01" → "Janeiro/2025" (mês de referência da parcela) */
+export const formatMonth = (iso: string) => `${months[Number(iso.slice(5, 7)) - 1]}/${iso.slice(0, 4)}`
+
+export const formatDateTime = (iso: string) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+
+/** 5.5 → "5,5%" */
+export const formatPercent = (value: number | string) => `${String(value).replace('.', ',')}%`
+
+export const situationLabel: Record<string, string> = {
+  RASCUNHO: 'Rascunho',
+  ATIVO: 'Ativo',
+  EM_RENOVACAO: 'Em renovação',
+  ENCERRANDO: 'Encerrando',
+  ENCERRADO: 'Encerrado',
+  CANCELADO: 'Cancelado',
+}
+
+export const adjustmentIndexLabel: Record<string, string> = {
+  NENHUM: 'Sem reajuste',
+  IGPM: 'IGP-M',
+  IPCA: 'IPCA',
+  PERCENTUAL_FIXO: 'Percentual fixo',
+}
+
+export const guaranteeLabel: Record<string, string> = {
+  NENHUMA: 'Sem garantia',
+  CAUCAO: 'Caução',
+  FIADOR: 'Fiador',
+  SEGURO_FIANCA: 'Seguro-fiança',
+  TITULO_CAPITALIZACAO: 'Título de capitalização',
+}
+
+export const installmentStatusLabel: Record<string, string> = {
+  ABERTA: 'Em aberto',
+  EM_ATRASO: 'Em atraso',
+  CANCELADA: 'Cancelada',
+}
+
+export const contractActionLabel: Record<string, string> = {
+  CRIADO: 'Contrato criado',
+  ALTERADO: 'Contrato alterado',
+  ATIVADO: 'Contrato ativado',
+  REAJUSTADO: 'Aluguel reajustado',
+  RENOVADO: 'Renovação iniciada',
+  ENCERRADO: 'Contrato encerrado',
+  CANCELADO: 'Contrato cancelado',
+}

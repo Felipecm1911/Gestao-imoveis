@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatBRL, formatDocument, formatPhone, parseDecimalInput } from './format'
+import { formatBRL, formatDate, formatDocument, formatMonth, formatPhone, parseDecimalInput } from './format'
 
 describe('parseDecimalInput', () => {
   it.each([
@@ -23,6 +23,12 @@ describe('formatação', () => {
   it('formata reais', () => {
     expect(formatBRL('2300.5').replace(/\s/g, ' ')).toBe('R$ 2.300,50')
     expect(formatBRL(null)).toBe('—')
+  })
+
+  it('formata datas sem deslocar o dia pelo fuso', () => {
+    expect(formatDate('2025-01-01')).toBe('01/01/2025')
+    expect(formatDate(null)).toBe('—')
+    expect(formatMonth('2025-12-01')).toBe('Dezembro/2025')
   })
 
   it('formata CPF e CNPJ', () => {

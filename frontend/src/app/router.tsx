@@ -1,4 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router'
+import { ContractDetailPage } from '@/features/contracts/ContractDetailPage'
+import { ContractFormPage } from '@/features/contracts/ContractFormPage'
+import { ContractsPage } from '@/features/contracts/ContractsPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { SignupPage } from '@/features/auth/SignupPage'
@@ -7,6 +10,8 @@ import { OwnersPage } from '@/features/owners/OwnersPage'
 import { PropertiesPage } from '@/features/properties/PropertiesPage'
 import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
 import { PropertyFormPage } from '@/features/properties/PropertyFormPage'
+import { TenantFormPage } from '@/features/tenants/TenantFormPage'
+import { TenantsPage } from '@/features/tenants/TenantsPage'
 import { UsersPage } from '@/features/users/UsersPage'
 import { AppLayout } from './AppLayout'
 
@@ -27,6 +32,13 @@ export const router = createBrowserRouter([
       { path: 'owners', element: <OwnersPage /> },
       { path: 'owners/new', element: <OwnerFormPage /> },
       { path: 'owners/:id/edit', element: <OwnerFormPage key="edit" /> },
+      { path: 'tenants', element: <TenantsPage /> },
+      { path: 'tenants/new', element: <TenantFormPage /> },
+      { path: 'tenants/:id/edit', element: <TenantFormPage key="edit" /> },
+      { path: 'contracts', element: <ContractsPage /> },
+      { path: 'contracts/new', element: <ContractFormPage /> },
+      { path: 'contracts/:id', element: <ContractDetailPage /> },
+      { path: 'contracts/:id/edit', element: <ContractFormPage key="edit" /> },
       { path: 'users', element: <UsersPage /> },
     ],
   },

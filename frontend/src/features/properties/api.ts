@@ -45,6 +45,7 @@ export type PropertyFilters = {
   minRent?: string
   maxRent?: string
   page?: number
+  size?: number
 }
 
 const key = ['properties'] as const
@@ -52,7 +53,7 @@ const key = ['properties'] as const
 export function useProperties(filters: PropertyFilters) {
   return useQuery({
     queryKey: [...key, 'list', filters],
-    queryFn: () => api<Page<PropertyListItem>>(`/properties${qs({ ...filters, size: 12 })}`),
+    queryFn: () => api<Page<PropertyListItem>>(`/properties${qs({ size: 12, ...filters })}`),
     placeholderData: keepPreviousData,
   })
 }

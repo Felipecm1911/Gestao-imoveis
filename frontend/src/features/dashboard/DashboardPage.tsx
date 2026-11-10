@@ -1,13 +1,14 @@
 import type { ComponentType } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, Home, ImageOff, Percent, Users, Wrench } from 'lucide-react'
+import { ArrowRight, FileText, Home, ImageOff, Percent, Users, Wrench } from 'lucide-react'
 import { EmptyState, ErrorState, LoadingRows, PageHeader } from '@/components/states'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMe } from '@/features/auth/api'
+import { useContracts } from '@/features/contracts/api'
 import { useOwners } from '@/features/owners/api'
 import { useProperties, usePropertyCount } from '@/features/properties/api'
 import { StatusBadge } from '@/features/properties/StatusBadge'
-import { formatBRL } from '@/lib/format'
+import { formatBRL, formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 function Kpi({ label, value, hint, icon: Icon, tone, pending }: {
@@ -34,6 +35,9 @@ const slices = [
   { status: 'INATIVO', label: 'Inativo', color: '#c53030' },
 ] as const
 
+/** Dias corridos até a data (meia-noite local), para o selo "N dias". */
+const daysUntil = (iso: string) => Math.ceil((new Date(`${iso}T00:00:00`).getTime() - Date.now()) / 86_400_000)
+
 export function DashboardPage() {
   const me = useMe()
   const total = usePropertyCount()
@@ -45,6 +49,7 @@ export function DashboardPage() {
   }
   const owners = useOwners({ page: 0, size: 1 })
   const recent = useProperties({ page: 0 })
+  const ending = useContracts({ situation: 'ENCERRANDO', sort: 'endDate,asc', size: 5 })
 
   const pending = total.isPending || Object.values(counts).some((c) => c.isPending)
   // uma contagem com erro estragaria a conta: mostra "—" em vez de um número falso
@@ -139,6 +144,39 @@ export function DashboardPage() {
           )}
         </section>
       </div>
+
+      <section aria-labelledby="ending-title" className="mt-6 rounded-xl border bg-card p-5 shadow-xs">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 id="ending-title" className="font-semibold">Contratos a vencer <span className="font-normal text-muted-foreground">(próximos 60 dias)</span></h2>
+          <Link to="/app/contracts?situation=ENCERRANDO" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            Ver todos <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+        {ending.isPending ? (
+          <LoadingRows rows={3} />
+        ) : ending.isError ? (
+          <ErrorState error={ending.error} onRetry={() => ending.refetch()} />
+        ) : ending.data.content.length === 0 ? (
+          <EmptyState title="Nenhum contrato vencendo" description="Contratos ativos que terminam em até 60 dias aparecem aqui." />
+        ) : (
+          <ul className="grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+            {ending.data.content.map((c) => (
+              <li key={c.id}>
+                <Link to={`/app/contracts/${c.id}`} className="flex items-center gap-3 py-2.5 hover:bg-muted/40">
+                  <FileText className="size-9 shrink-0 rounded-lg bg-orange-100 p-2 text-brand-solid dark:bg-orange-950 dark:text-orange-300" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{c.code} – {c.propertyTitle}</span>
+                    <span className="block truncate text-xs text-muted-foreground">Vence em {formatDate(c.endDate)}</span>
+                  </span>
+                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                    {Math.max(0, daysUntil(c.endDate))} dias
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </>
   )
 }
