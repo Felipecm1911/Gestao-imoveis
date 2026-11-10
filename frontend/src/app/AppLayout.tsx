@@ -39,9 +39,9 @@ import { applyTheme, currentTheme, type Theme } from './theme'
 
 type NavItem = { label: string; icon: ComponentType<{ className?: string }>; to?: string; adminOnly?: boolean; mobile?: string }
 
-// sem `to` = módulo de uma próxima fase: aparece desabilitado com "Em breve", nunca leva a tela vazia
+// sem `to` = módulo de uma próxima fase: aparece esmaecido ("em breve"), nunca leva a tela vazia
 const nav: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', icon: LayoutDashboard, to: '/app/dashboard', mobile: 'Início' },
   { label: 'Imóveis', icon: Home, to: '/app/properties', mobile: 'Imóveis' },
   { label: 'Proprietários', icon: Users, to: '/app/owners', mobile: 'Proprietários' },
   { label: 'Inquilinos', icon: UserRound },
@@ -78,10 +78,10 @@ function Sidebar({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
               {label}
             </NavLink>
           ) : (
-            <span key={label} aria-disabled="true" className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm opacity-60">
+            <span key={label} aria-disabled="true" title="Em breve" className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm opacity-50">
               <Icon className="size-[18px]" aria-hidden />
               {label}
-              <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase">Em breve</span>
+              <span className="sr-only">(em breve)</span>
             </span>
           ),
         )}

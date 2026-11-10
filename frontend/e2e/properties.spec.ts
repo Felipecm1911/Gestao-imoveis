@@ -17,7 +17,7 @@ async function signup(page: Page) {
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill('senha-forte-123')
   await page.getByRole('button', { name: 'Criar conta' }).click()
-  await expect(page.getByRole('heading', { name: 'Imóveis' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
   return email
 }
 
@@ -99,7 +99,7 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
   await expect(page.getByText('E-mail ou senha incorretos.')).toBeVisible()
   await page.getByLabel('Senha').fill('senha-forte-123')
   await page.getByRole('button', { name: 'Entrar' }).click()
-  await expect(page.getByText('1 imóvel')).toBeVisible()
+  await expect(page.getByText('0 de 1 ativos alugados')).toBeVisible()
 })
 
 test('rotas internas exigem login', async ({ page }) => {

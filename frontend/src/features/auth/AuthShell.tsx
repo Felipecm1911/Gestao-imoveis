@@ -3,7 +3,7 @@ import { Navigate } from 'react-router'
 import { CircleCheck } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { useMe } from './api'
-import { BuildingArt } from './BuildingArt'
+import building from '@/assets/login-building.jpg'
 
 // só o que o sistema já faz ou está no plano das próximas fases
 const highlights = [
@@ -17,17 +17,14 @@ const highlights = [
 
 export function AuthShell({ title, description, children, footer }: { title: string; description: string; children: ReactNode; footer: ReactNode }) {
   const me = useMe()
-  if (me.data) return <Navigate to="/app/properties" replace />
+  if (me.data) return <Navigate to="/app/dashboard" replace />
   return (
     <div className="grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <aside className="relative hidden overflow-hidden bg-sidebar p-12 text-sidebar-foreground lg:flex lg:flex-col">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_100%,rgb(15_118_110/0.5),transparent_55%),radial-gradient(circle_at_0%_0%,rgb(201_107_75/0.22),transparent_45%)]"
-        />
-        <BuildingArt className="pointer-events-none absolute -right-4 bottom-0 h-[64%] max-h-[600px]" />
+        <img src={building} alt="" className="pointer-events-none absolute inset-y-0 right-0 h-full w-[62%] object-cover" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--sidebar)_38%,color-mix(in_oklab,var(--sidebar)_70%,transparent)_55%,transparent_80%)]" />
         <Logo subtitle className="relative text-white [&_span]:text-4xl [&_span.block]:mt-1 [&_span.block]:text-base [&_svg]:size-14" />
-        <div className="relative mt-auto max-w-[44%]">
+        <div className="relative mt-auto max-w-[52%]">
           <p className="text-[1.75rem] leading-tight font-semibold text-white xl:text-[2rem]">
             O controle completo da sua imobiliária em um só lugar
           </p>

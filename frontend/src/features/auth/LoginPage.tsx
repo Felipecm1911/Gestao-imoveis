@@ -18,7 +18,7 @@ export function LoginPage() {
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await login.mutateAsync(values)
-      navigate('/app/properties')
+      navigate('/app/dashboard')
     } catch (e) {
       applyServerErrors(e, form.setError)
     }

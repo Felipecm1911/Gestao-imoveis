@@ -21,7 +21,7 @@ export function SignupPage() {
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await signup.mutateAsync(values)
-      navigate('/app/properties')
+      navigate('/app/dashboard')
     } catch (e) {
       applyServerErrors(e, form.setError)
     }

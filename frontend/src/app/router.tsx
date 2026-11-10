@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router'
+import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { SignupPage } from '@/features/auth/SignupPage'
 import { OwnerFormPage } from '@/features/owners/OwnerFormPage'
@@ -10,14 +11,15 @@ import { UsersPage } from '@/features/users/UsersPage'
 import { AppLayout } from './AppLayout'
 
 export const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/app/properties" replace /> },
+  { path: '/', element: <Navigate to="/app/dashboard" replace /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignupPage /> },
   {
     path: '/app',
     element: <AppLayout />,
     children: [
-      { index: true, element: <Navigate to="properties" replace /> },
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      { path: 'dashboard', element: <DashboardPage /> },
       { path: 'properties', element: <PropertiesPage /> },
       { path: 'properties/new', element: <PropertyFormPage /> },
       { path: 'properties/:id', element: <PropertyDetailPage /> },
