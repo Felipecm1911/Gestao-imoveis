@@ -1,5 +1,6 @@
 package br.com.gestaoimoveis.properties.service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import br.com.gestaoimoveis.properties.api.PropertyDtos.PhotoResponse;
 import br.com.gestaoimoveis.properties.api.PropertyDtos.PropertyListItem;
 import br.com.gestaoimoveis.properties.api.PropertyDtos.PropertyRequest;
 import br.com.gestaoimoveis.properties.api.PropertyDtos.PropertyResponse;
+import br.com.gestaoimoveis.properties.api.PropertyDtos.PropertySummary;
 import br.com.gestaoimoveis.properties.domain.Property;
 import br.com.gestaoimoveis.properties.domain.PropertyPhoto;
 import br.com.gestaoimoveis.properties.repository.PropertyPhotoRepository;
@@ -91,14 +93,41 @@ public class PropertyService {
         return toResponse(p);
     }
 
-    // a regra "imóvel com contrato ATIVO não pode ser excluído" entra com os contratos (Fase 3)
+    /** Usado pelos contratos: código e título dos imóveis de uma página. */
+    @Transactional(readOnly = true)
+    public Map<UUID, PropertySummary> summariesById(Collection<UUID> ids) {
+        return properties.findAllById(ids).stream()
+                .collect(Collectors.toMap(Property::getId, p -> new PropertySummary(p.getId(), p.getCode(), p.getTitle())));
+    }
+
+    /** Usado pelos contratos na ativação. A trava da linha põe em fila ativações simultâneas no mesmo imóvel. */
+    @Transactional
+    public void occupy(UUID id) {
+        try {
+            loadForUpdate(id).occupy();
+        } catch (IllegalArgumentException e) {
+            throw BusinessException.conflict(e.getMessage());
+        }
+    }
+
+    /** Usado pelos contratos quando o imóvel fica sem contrato ativo. */
+    @Transactional
+    public void release(UUID id) {
+        loadForUpdate(id).release();
+    }
+
     @Transactional
     public void delete(UUID id) {
         Property p = load(id);
         List<PropertyPhoto> gallery = photos.findByPropertyIdOrderByPosition(id);
         photos.deleteAll(gallery);
         properties.delete(p);
-        photos.flush();
+        try {
+            photos.flush();
+        } catch (DataIntegrityViolationException e) {
+            // a FK do contrato segura o imóvel: com contrato (ativo ou histórico) ele não some
+            throw BusinessException.conflict("Este imóvel tem contratos e não pode ser excluído.");
+        }
         gallery.forEach(photo -> files.delete(photo.getFileId()));
     }
 

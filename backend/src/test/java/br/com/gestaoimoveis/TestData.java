@@ -22,6 +22,20 @@ public final class TestData {
                 .formatted(ownerId, code, city, rent);
     }
 
+    public static String tenant(String cpf) {
+        return """
+                {"name":"João Inquilino","document":"%s","email":"joao@exemplo.com","phone":"11912345678",
+                 "address":{"city":"São Paulo","state":"SP","zip":"01310100"}}""".formatted(cpf);
+    }
+
+    /** Rascunho de contrato: aluguel de 3100,00 com vencimento no dia 10. */
+    public static String contract(String propertyId, String tenantId, String start, String end) {
+        return """
+                {"propertyId":"%s","tenantId":"%s","startDate":"%s","endDate":"%s","monthlyRent":3100.00,
+                 "dueDay":10,"adjustmentIndex":"IGPM","guaranteeType":"CAUCAO","guaranteeValue":9300,
+                 "notes":"Contrato de teste"}""".formatted(propertyId, tenantId, start, end);
+    }
+
     /** Menor PNG válido (1x1). */
     public static final byte[] PNG = java.util.Base64.getDecoder().decode(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==");

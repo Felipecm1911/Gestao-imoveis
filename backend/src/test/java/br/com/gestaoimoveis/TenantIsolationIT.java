@@ -55,6 +55,13 @@ class TenantIsolationIT extends IntegrationTest {
         String userA = JsonPath.<List<String>>read(mvc.perform(get("/api/users").cookie(a))
                 .andReturn().getResponse().getContentAsString(), "$[*].id").getFirst();
 
+        String tenantA = json(post("/api/tenants").with(csrf()).cookie(a).contentType(MediaType.APPLICATION_JSON)
+                .content(TestData.tenant(CPFS[2])), "$.id");
+        String contractBody = TestData.contract(propertyA, tenantA, "2026-01-15", "2027-01-14");
+        String contractA = json(post("/api/contracts").with(csrf()).cookie(a).contentType(MediaType.APPLICATION_JSON)
+                .content(contractBody), "$.id");
+        String contractUrl = "/api/contracts/" + contractA;
+
         Cookie b = signup();
         String ownerB = json(post("/api/owners").with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
                 .content(TestData.owner(CPFS[1])), "$.id"); // mesmo CPF em outra organização é permitido
@@ -78,6 +85,25 @@ class TenantIsolationIT extends IntegrationTest {
                 patch("/api/users/" + userA).with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"x\",\"role\":\"STAFF\"}"),
                 post("/api/users/" + userA + "/deactivate").with(csrf()).cookie(b),
+                get("/api/tenants/" + tenantA).cookie(b),
+                put("/api/tenants/" + tenantA).with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
+                        .content(withVersion(TestData.tenant(CPFS[2]))),
+                delete("/api/tenants/" + tenantA).with(csrf()).cookie(b),
+                get(contractUrl).cookie(b),
+                put(contractUrl).with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
+                        .content(withVersion(contractBody)),
+                post(contractUrl + "/activate").with(csrf()).cookie(b),
+                post(contractUrl + "/adjust").with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"percent\":10,\"effectiveDate\":\"2026-07-01\"}"),
+                post(contractUrl + "/renew").with(csrf()).cookie(b),
+                post(contractUrl + "/terminate").with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"date\":\"2026-06-30\",\"reason\":\"x\"}"),
+                post(contractUrl + "/cancel").with(csrf()).cookie(b),
+                get(contractUrl + "/history").cookie(b),
+                get(contractUrl + "/pdf").cookie(b),
+                // B tentando fechar contrato com o imóvel e o inquilino de A
+                post("/api/contracts").with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
+                        .content(contractBody),
                 // B tentando usar o proprietário de A num imóvel próprio
                 post("/api/properties").with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
                         .content(TestData.property(ownerA, "X-2", "Santos", "1")));
@@ -87,13 +113,24 @@ class TenantIsolationIT extends IntegrationTest {
 
         mvc.perform(get("/api/owners").cookie(b)).andExpect(jsonPath("$.totalElements").value(1));
         mvc.perform(get("/api/properties").cookie(b)).andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/tenants").cookie(b)).andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/contracts").cookie(b)).andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/contracts/stats").cookie(b)).andExpect(jsonPath("$.total").value(0));
         mvc.perform(get("/api/properties/" + propertyA).cookie(a)).andExpect(status().isOk()); // A intacto
+        mvc.perform(get(contractUrl).cookie(a)).andExpect(jsonPath("$.status").value("RASCUNHO"));
 
         // segunda camada: SQL sem filtro de organização, só com o RLS
         UUID orgB = UUID.fromString(json(get("/api/auth/me").cookie(b), "$.organizationId"));
         UUID orgA = UUID.fromString(json(get("/api/auth/me").cookie(a), "$.organizationId"));
         assertThat(countAllProperties(orgB)).isZero();
         assertThat(countAllProperties(orgA)).isEqualTo(1);
+
+        // imóvel próprio de B com o inquilino de A: o inquilino também não existe para B
+        String propertyB = json(post("/api/properties").with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
+                .content(TestData.property(ownerB, "B-0001", "Santos", "1000")), "$.id");
+        mvc.perform(post("/api/contracts").with(csrf()).cookie(b).contentType(MediaType.APPLICATION_JSON)
+                        .content(TestData.contract(propertyB, tenantA, "2026-01-15", "2027-01-14")))
+                .andExpect(status().isNotFound());
     }
 
     private long countAllProperties(UUID org) {

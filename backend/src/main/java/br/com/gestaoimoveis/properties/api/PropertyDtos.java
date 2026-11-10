@@ -60,6 +60,9 @@ public final class PropertyDtos {
         }
     }
 
+    /** Resumo usado por outros módulos (ex.: contrato mostra o imóvel). */
+    public record PropertySummary(UUID id, String code, String title) {}
+
     /** Item da listagem (cards): sem descrição nem galeria, só a capa. */
     public record PropertyListItem(UUID id, String code, String title, Type type, String street, String number,
             String district, String city,

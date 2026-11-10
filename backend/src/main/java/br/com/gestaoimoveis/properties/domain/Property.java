@@ -86,7 +86,20 @@ public class Property {
         this.suggestedRent = d.suggestedRent();
     }
 
-    /** OCUPADO é controlado pelos contratos (Fase 3); manualmente só as outras situações. */
+    /** Contrato ativado: o imóvel passa a OCUPADO. Inativo não recebe contrato. */
+    public void occupy() {
+        if (status == Status.INATIVO) {
+            throw new IllegalArgumentException("Imóvel inativo não pode receber contrato.");
+        }
+        this.status = Status.OCUPADO;
+    }
+
+    /** Sem contrato ativo, o imóvel OCUPADO volta a DISPONIVEL. */
+    public void release() {
+        if (status == Status.OCUPADO) this.status = Status.DISPONIVEL;
+    }
+
+    /** OCUPADO é controlado pelos contratos; manualmente só as outras situações. */
     public void changeStatus(Status newStatus) {
         if (newStatus == Status.OCUPADO || status == Status.OCUPADO) {
             throw new IllegalArgumentException("A situação OCUPADO é definida pelos contratos.");
