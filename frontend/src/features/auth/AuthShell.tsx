@@ -24,7 +24,7 @@ export function AuthShell({ title, description, children, footer }: { title: str
         <img src={building} alt="" className="pointer-events-none absolute inset-y-0 right-0 h-full w-[62%] object-cover" />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--sidebar)_38%,color-mix(in_oklab,var(--sidebar)_70%,transparent)_55%,transparent_80%)]" />
         <Logo subtitle className="relative text-white [&_span]:text-4xl [&_span.block]:mt-1 [&_span.block]:text-base [&_svg]:size-14" />
-        <div className="relative mt-auto max-w-[52%]">
+        <div className="relative mt-14 max-w-[52%]">
           <p className="text-[1.75rem] leading-tight font-semibold text-white xl:text-[2rem]">
             O controle completo da sua imobiliária em um só lugar
           </p>
@@ -36,6 +36,9 @@ export function AuthShell({ title, description, children, footer }: { title: str
             ))}
           </ul>
         </div>
+        <svg aria-hidden viewBox="0 0 1440 320" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-32 w-full text-brand-solid">
+          <path fill="currentColor" d="M0,200 C260,110 430,300 760,250 C1060,205 1230,90 1440,150 L1440,320 L0,320 Z" />
+        </svg>
       </aside>
       <main className="flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm sm:p-10">

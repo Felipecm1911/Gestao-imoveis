@@ -40,7 +40,10 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
   await page.getByLabel('CPF ou CNPJ').fill(CPF)
   await page.getByLabel('Telefone').fill('(11) 98765-4321')
   await page.getByRole('button', { name: 'Salvar' }).click()
-  await expect(page.getByRole('cell', { name: 'Maria Proprietária', exact: true })).toBeVisible()
+  // a linha traz o contato embaixo do nome e a contagem de imóveis
+  const ownerRow = page.getByRole('row', { name: /Maria Proprietária/ })
+  await expect(ownerRow.getByText('(11) 98765-4321')).toBeVisible()
+  await expect(ownerRow.getByRole('cell', { name: '0', exact: true })).toBeVisible()
   await expect(page.getByRole('cell', { name: CPF, exact: true })).toBeVisible()
 
   // imóvel
@@ -100,6 +103,19 @@ test('cadastro → proprietário → imóvel com foto → filtros → logout →
   await page.getByLabel('Senha').fill('senha-forte-123')
   await page.getByRole('button', { name: 'Entrar' }).click()
   await expect(page.getByText('0 de 1 ativos alugados')).toBeVisible()
+})
+
+test('configurações → empresa: renomeia a imobiliária', async ({ page }) => {
+  await signup(page)
+  await page.goto('/app/users?secao=empresa')
+  await page.getByLabel('Nome da imobiliária').fill('   ')
+  await page.getByRole('button', { name: 'Salvar alterações' }).click()
+  await expect(page.getByText('Informe o nome da imobiliária')).toBeVisible()
+  await page.getByLabel('Nome da imobiliária').fill('Imobiliária Renomeada')
+  await page.getByRole('button', { name: 'Salvar alterações' }).click()
+  await expect(page.getByText('Alterações salvas')).toBeVisible()
+  await page.reload()
+  await expect(page.getByLabel('Nome da imobiliária')).toHaveValue('Imobiliária Renomeada')
 })
 
 test('rotas internas exigem login', async ({ page }) => {

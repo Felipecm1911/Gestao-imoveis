@@ -13,6 +13,8 @@ export type PropertyListItem = {
   code: string
   title: string
   type: PropertyType
+  street: string
+  number: string
   district: string
   city: string
   state: string
@@ -28,8 +30,6 @@ export type PropertyListItem = {
 
 export type Property = Omit<PropertyListItem, 'coverUrl'> & {
   description: string | null
-  street: string
-  number: string
   complement: string | null
   zip: string
   photos: Photo[]
@@ -117,6 +117,15 @@ export function useSetCover(id: string) {
   return usePropertyMutation((photoId: string) =>
     api<Property>(path`/properties/${id}/photos/${photoId}/cover`, { method: 'PUT' }),
   )
+}
+
+/** Quantos imóveis o proprietário tem (coluna "Imóveis" da lista de proprietários). */
+export function useOwnerPropertyCount(ownerId: string) {
+  // shortcut: 1 requisição por linha (até 20 por página); trocar por contagem no /owners quando o repasse por proprietário entrar (Fase 5)
+  return useQuery({
+    queryKey: [...key, 'list', 'count', 'owner', ownerId],
+    queryFn: () => api<Page<PropertyListItem>>(`/properties${qs({ ownerId, size: 1 })}`).then((p) => p.totalElements),
+  })
 }
 
 /** Total por situação para os cards de resumo (size=1: só o totalElements interessa). */

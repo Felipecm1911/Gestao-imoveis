@@ -61,12 +61,14 @@ public final class PropertyDtos {
     }
 
     /** Item da listagem (cards): sem descrição nem galeria, só a capa. */
-    public record PropertyListItem(UUID id, String code, String title, Type type, String district, String city,
+    public record PropertyListItem(UUID id, String code, String title, Type type, String street, String number,
+            String district, String city,
             String state, BigDecimal areaM2, short bedrooms, short bathrooms, short parking,
             BigDecimal suggestedRent, Status status, OwnerSummary owner, String coverUrl) {
 
         public static PropertyListItem of(Property p, OwnerSummary owner, String coverUrl) {
-            return new PropertyListItem(p.getId(), p.getCode(), p.getTitle(), p.getType(), p.getDistrict(),
+            return new PropertyListItem(p.getId(), p.getCode(), p.getTitle(), p.getType(), p.getStreet(), p.getNumber(),
+                    p.getDistrict(),
                     p.getCity(), p.getState(), p.getAreaM2(), p.getBedrooms(), p.getBathrooms(), p.getParking(),
                     p.getSuggestedRent(), p.getStatus(), owner, coverUrl);
         }

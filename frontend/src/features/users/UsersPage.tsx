@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Navigate } from 'react-router'
+import { Link, Navigate, useSearchParams } from 'react-router'
 import { Bell, Building2, Plug, Plus, Users as UsersIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useMe } from '@/features/auth/api'
+import { CompanySettings } from '@/features/organization/CompanySettings'
 import { ApiError } from '@/lib/api'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -22,7 +23,6 @@ import { newUserSchema, type NewUserForm } from './schemas'
 
 // seções de uma próxima fase: visíveis, mas desabilitadas
 const settingsSoon = [
-  { label: 'Empresa', icon: Building2 },
   { label: 'Notificações', icon: Bell },
   { label: 'Integrações', icon: Plug },
 ]
@@ -83,6 +83,7 @@ export function UsersPage() {
   const deactivate = useDeactivateUser()
   const [creating, setCreating] = useState(false)
   const [toDeactivate, setToDeactivate] = useState<User | null>(null)
+  const company = useSearchParams()[0].get('secao') === 'empresa'
 
   if (me.data?.role !== 'ADMIN') return <Navigate to="/app/properties" replace />
   const myId = me.data.id
@@ -91,16 +92,23 @@ export function UsersPage() {
     <>
       <PageHeader title="Configurações" description="Gerencie a sua imobiliária e quem acessa o sistema." />
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <nav aria-label="Seções de configurações" className="flex gap-1 overflow-x-auto rounded-xl border bg-card p-2 shadow-xs lg:grid lg:content-start">
-        <span aria-current="page" className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium whitespace-nowrap text-accent-foreground">
-          <UsersIcon className="size-4" aria-hidden /> Usuários e permissões
-        </span>
+      <nav aria-label="Seções de configurações" className="flex gap-1 overflow-x-auto rounded-xl border bg-card p-2 shadow-xs lg:grid lg:content-start lg:self-start">
+        {[
+          { label: 'Empresa', icon: Building2, to: '/app/users?secao=empresa', active: company },
+          { label: 'Usuários e permissões', icon: UsersIcon, to: '/app/users', active: !company },
+        ].map(({ label, icon: Icon, to, active }) => (
+          <Link key={label} to={to} aria-current={active ? 'page' : undefined}
+            className={cn('flex items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap hover:bg-accent/60', active && 'bg-accent font-medium text-accent-foreground')}>
+            <Icon className="size-4" aria-hidden /> {label}
+          </Link>
+        ))}
         {settingsSoon.map(({ label, icon: Icon }) => (
           <span key={label} aria-disabled="true" title="Em breve" className="flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap text-muted-foreground opacity-60">
             <Icon className="size-4" aria-hidden /> {label}
           </span>
         ))}
       </nav>
+      {company ? <CompanySettings /> : (
       <section aria-labelledby="users-title" className="min-w-0">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -160,6 +168,7 @@ export function UsersPage() {
         </div>
       )}
       </section>
+      )}
       </div>
       <NewUserDialog open={creating} onClose={() => setCreating(false)} />
       <ConfirmDialog

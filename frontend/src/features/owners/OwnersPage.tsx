@@ -11,7 +11,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ApiError } from '@/lib/api'
 import { useDebounced } from '@/lib/useDebounced'
 import { formatDocument, formatPhone, initials } from '@/lib/format'
+import { useOwnerPropertyCount } from '@/features/properties/api'
 import { useDeleteOwner, useOwners, type Owner } from './api'
+
+function PropertyCount({ ownerId }: { ownerId: string }) {
+  const count = useOwnerPropertyCount(ownerId)
+  return <>{count.data ?? (count.isError ? '—' : '…')}</>
+}
 
 export function OwnersPage() {
   const [params, setParams] = useSearchParams()
@@ -65,8 +71,7 @@ export function OwnersPage() {
                 <TableRow>
                   <TableHead className="pl-4">Nome</TableHead>
                   <TableHead>CPF/CNPJ</TableHead>
-                  <TableHead className="hidden md:table-cell">E-mail</TableHead>
-                  <TableHead className="hidden lg:table-cell">Telefone</TableHead>
+                  <TableHead className="text-center">Imóveis</TableHead>
                   <TableHead className="w-24 pr-4 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -78,12 +83,16 @@ export function OwnersPage() {
                         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground" aria-hidden>
                           {initials(o.name)}
                         </span>
-                        {o.name}
+                        <span className="min-w-0">
+                          <span className="block truncate">{o.name}</span>
+                          <span className="block truncate text-xs font-normal text-muted-foreground">
+                            {[o.email, o.phone && formatPhone(o.phone)].filter(Boolean).join(' · ') || 'Sem contato'}
+                          </span>
+                        </span>
                       </span>
                     </TableCell>
                     <TableCell>{formatDocument(o.document)}</TableCell>
-                    <TableCell className="hidden text-muted-foreground md:table-cell">{o.email ?? '—'}</TableCell>
-                    <TableCell className="hidden text-muted-foreground lg:table-cell">{o.phone ? formatPhone(o.phone) : '—'}</TableCell>
+                    <TableCell className="text-center"><PropertyCount ownerId={o.id} /></TableCell>
                     <TableCell className="flex justify-end gap-1 pr-4">
                       <Button variant="ghost" size="icon" asChild>
                         <Link to={`/app/owners/${o.id}/edit`} aria-label={`Editar ${o.name}`}><Pencil /></Link>

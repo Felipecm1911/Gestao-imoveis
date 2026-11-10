@@ -122,9 +122,8 @@ function PropertyTable({ items }: { items: PropertyListItem[] }) {
         <TableHeader className="bg-muted/60">
           <TableRow>
             <TableHead className="pl-4">Código</TableHead>
-            <TableHead>Imóvel</TableHead>
+            <TableHead>Título / Endereço</TableHead>
             <TableHead>Tipo</TableHead>
-            <TableHead className="hidden lg:table-cell">Proprietário</TableHead>
             <TableHead>Aluguel</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="pr-4 text-right">Ações</TableHead>
@@ -139,12 +138,11 @@ function PropertyTable({ items }: { items: PropertyListItem[] }) {
                   <Thumb p={p} className="h-11 w-16" />
                   <span className="min-w-0">
                     <span className="block max-w-72 truncate font-medium">{p.title}</span>
-                    <span className="block max-w-72 truncate text-xs text-muted-foreground">{p.district}, {p.city} – {p.state}</span>
+                    <span className="block max-w-72 truncate text-xs text-muted-foreground">{p.street}, {p.number} – {p.district}</span>
                   </span>
                 </Link>
               </TableCell>
               <TableCell>{propertyTypeLabel[p.type]}</TableCell>
-              <TableCell className="hidden max-w-48 truncate lg:table-cell">{p.owner.name}</TableCell>
               <TableCell className="font-medium">{formatBRL(p.suggestedRent)}</TableCell>
               <TableCell><StatusBadge status={p.status} /></TableCell>
               <TableCell className="pr-4">

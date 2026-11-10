@@ -74,37 +74,7 @@ export function DashboardPage() {
         <Kpi label="Em manutenção" value={counts.MANUTENCAO.data} hint="imóveis parados" icon={Wrench} tone="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" pending={counts.MANUTENCAO.isPending} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <section aria-labelledby="status-title" className="rounded-xl border bg-card p-5 shadow-xs">
-          <h2 id="status-title" className="font-semibold">Status dos imóveis</h2>
-          {failed ? (
-            <ErrorState error={total.error ?? Object.values(counts).find((c) => c.isError)?.error} onRetry={() => [total, ...Object.values(counts)].forEach((c) => c.refetch())} />
-          ) : pending ? (
-            <Skeleton className="mx-auto mt-6 size-44 rounded-full" />
-          ) : !total.data ? (
-            <EmptyState title="Nenhum imóvel ainda" description="Cadastre imóveis para ver a distribuição." />
-          ) : (
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-6">
-              <div className="relative size-44 shrink-0 rounded-full" style={{ background: `conic-gradient(${gradient})` }} role="img" aria-label={`Total de ${total.data} imóveis`}>
-                <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-card">
-                  <span className="text-3xl font-semibold">{total.data}</span>
-                  <span className="text-sm text-muted-foreground">Imóveis</span>
-                </div>
-              </div>
-              <ul className="grid gap-2.5 text-sm">
-                {slices.map((s) => (
-                  <li key={s.status}>
-                    <Link to={`/app/properties?status=${s.status}`} className="flex items-center gap-2 hover:underline">
-                      <i className="size-2.5 rounded-full" style={{ background: s.color }} aria-hidden />
-                      {s.label} ({n(s.status)})
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <section aria-labelledby="recent-title" className="rounded-xl border bg-card p-5 shadow-xs">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 id="recent-title" className="font-semibold">Imóveis da carteira</h2>
@@ -136,6 +106,36 @@ export function DashboardPage() {
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="status-title" className="rounded-xl border bg-card p-5 shadow-xs">
+          <h2 id="status-title" className="font-semibold">Status dos imóveis</h2>
+          {failed ? (
+            <ErrorState error={total.error ?? Object.values(counts).find((c) => c.isError)?.error} onRetry={() => [total, ...Object.values(counts)].forEach((c) => c.refetch())} />
+          ) : pending ? (
+            <Skeleton className="mx-auto mt-6 size-44 rounded-full" />
+          ) : !total.data ? (
+            <EmptyState title="Nenhum imóvel ainda" description="Cadastre imóveis para ver a distribuição." />
+          ) : (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-6">
+              <div className="relative size-44 shrink-0 rounded-full" style={{ background: `conic-gradient(${gradient})` }} role="img" aria-label={`Total de ${total.data} imóveis`}>
+                <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-card">
+                  <span className="text-3xl font-semibold">{total.data}</span>
+                  <span className="text-sm text-muted-foreground">Imóveis</span>
+                </div>
+              </div>
+              <ul className="grid gap-2.5 text-sm">
+                {slices.map((s) => (
+                  <li key={s.status}>
+                    <Link to={`/app/properties?status=${s.status}`} className="flex items-center gap-2 hover:underline">
+                      <i className="size-2.5 rounded-full" style={{ background: s.color }} aria-hidden />
+                      {s.label} ({n(s.status)})
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </section>
       </div>

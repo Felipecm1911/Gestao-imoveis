@@ -8,7 +8,6 @@ import {
   CircleDollarSign,
   FileText,
   Home,
-  LayoutDashboard,
   LogOut,
   Menu,
   Moon,
@@ -41,8 +40,8 @@ type NavItem = { label: string; icon: ComponentType<{ className?: string }>; to?
 
 // sem `to` = módulo de uma próxima fase: aparece esmaecido ("em breve"), nunca leva a tela vazia
 const nav: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, to: '/app/dashboard', mobile: 'Início' },
-  { label: 'Imóveis', icon: Home, to: '/app/properties', mobile: 'Imóveis' },
+  { label: 'Dashboard', icon: Home, to: '/app/dashboard', mobile: 'Início' },
+  { label: 'Imóveis', icon: Building2, to: '/app/properties', mobile: 'Imóveis' },
   { label: 'Proprietários', icon: Users, to: '/app/owners', mobile: 'Proprietários' },
   { label: 'Inquilinos', icon: UserRound },
   { label: 'Contratos', icon: FileText },
