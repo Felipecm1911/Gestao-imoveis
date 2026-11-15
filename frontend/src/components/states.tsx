@@ -6,10 +6,10 @@ import { ApiError } from '@/lib/api'
 
 export function PageHeader({ title, description, actions, badge }: { title: string; description?: ReactNode; actions?: ReactNode; badge?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{title}</h1>
           {badge}
         </div>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}

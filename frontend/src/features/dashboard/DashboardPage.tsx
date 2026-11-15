@@ -1,11 +1,10 @@
 import type { ComponentType } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, FileText, Home, ImageOff, Percent, Users, Wrench } from 'lucide-react'
+import { ArrowRight, FileText, Home, ImageOff, Percent, Wrench } from 'lucide-react'
 import { EmptyState, ErrorState, LoadingRows, PageHeader } from '@/components/states'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMe } from '@/features/auth/api'
-import { useContracts } from '@/features/contracts/api'
-import { useOwners } from '@/features/owners/api'
+import { useContractStats, useContracts } from '@/features/contracts/api'
 import { useProperties, usePropertyCount } from '@/features/properties/api'
 import { StatusBadge } from '@/features/properties/StatusBadge'
 import { formatBRL, formatDate } from '@/lib/format'
@@ -29,10 +28,10 @@ function Kpi({ label, value, hint, icon: Icon, tone, pending }: {
 }
 
 const slices = [
-  { status: 'OCUPADO', label: 'Alugado', color: '#2f855a' },
-  { status: 'DISPONIVEL', label: 'Disponível', color: '#0284c7' },
-  { status: 'MANUTENCAO', label: 'Manutenção', color: '#b7791f' },
-  { status: 'INATIVO', label: 'Inativo', color: '#c53030' },
+  { status: 'OCUPADO', label: 'Alugado', color: '#007681' },
+  { status: 'DISPONIVEL', label: 'Disponível', color: '#bc6a21' },
+  { status: 'MANUTENCAO', label: 'Manutenção', color: '#c75234' },
+  { status: 'INATIVO', label: 'Inativo', color: '#8296a9' },
 ] as const
 
 /** Dias corridos até a data (meia-noite local), para o selo "N dias". */
@@ -47,7 +46,7 @@ export function DashboardPage() {
     MANUTENCAO: usePropertyCount('MANUTENCAO'),
     INATIVO: usePropertyCount('INATIVO'),
   }
-  const owners = useOwners({ page: 0, size: 1 })
+  const contracts = useContractStats()
   const recent = useProperties({ page: 0 })
   const ending = useContracts({ situation: 'ENCERRANDO', sort: 'endDate,asc', size: 5 })
 
@@ -75,11 +74,11 @@ export function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi label="Imóveis" value={total.data} hint="na carteira" icon={Home} tone="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" pending={total.isPending} />
         <Kpi label="Taxa de ocupação" value={failed ? undefined : `${occupancy.toLocaleString('pt-BR')}%`} hint={failed ? 'não foi possível calcular' : `${n('OCUPADO')} de ${active} ativos alugados`} icon={Percent} tone="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" pending={pending} />
-        <Kpi label="Proprietários" value={owners.data?.totalElements} hint="cadastrados" icon={Users} tone="bg-orange-100 text-brand-solid dark:bg-orange-950 dark:text-orange-300" pending={owners.isPending} />
+        <Kpi label="Contratos ativos" value={contracts.data?.active} hint="em andamento" icon={FileText} tone="bg-orange-100 text-brand-solid dark:bg-orange-950 dark:text-orange-300" pending={contracts.isPending} />
         <Kpi label="Em manutenção" value={counts.MANUTENCAO.data} hint="imóveis parados" icon={Wrench} tone="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" pending={counts.MANUTENCAO.isPending} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
         <section aria-labelledby="recent-title" className="rounded-xl border bg-card p-5 shadow-xs">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 id="recent-title" className="font-semibold">Imóveis da carteira</h2>
@@ -115,7 +114,7 @@ export function DashboardPage() {
         </section>
 
         <section aria-labelledby="status-title" className="rounded-xl border bg-card p-5 shadow-xs">
-          <h2 id="status-title" className="font-semibold">Status dos imóveis</h2>
+          <h2 id="status-title" className="font-semibold">Ocupação dos imóveis</h2>
           {failed ? (
             <ErrorState error={total.error ?? Object.values(counts).find((c) => c.isError)?.error} onRetry={() => [total, ...Object.values(counts)].forEach((c) => c.refetch())} />
           ) : pending ? (
@@ -124,10 +123,10 @@ export function DashboardPage() {
             <EmptyState title="Nenhum imóvel ainda" description="Cadastre imóveis para ver a distribuição." />
           ) : (
             <div className="mt-5 flex flex-wrap items-center justify-center gap-6">
-              <div className="relative size-44 shrink-0 rounded-full" style={{ background: `conic-gradient(${gradient})` }} role="img" aria-label={`Total de ${total.data} imóveis`}>
-                <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-card">
-                  <span className="text-3xl font-semibold">{total.data}</span>
-                  <span className="text-sm text-muted-foreground">Imóveis</span>
+              <div className="relative size-32 shrink-0 rounded-full" style={{ background: `conic-gradient(${gradient})` }} role="img" aria-label={`Total de ${total.data} imóveis`}>
+                <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-card">
+                  <span className="text-3xl font-semibold">{occupancy.toLocaleString('pt-BR')}%</span>
+                  <span className="text-sm text-muted-foreground">Ocupação</span>
                 </div>
               </div>
               <ul className="grid gap-2.5 text-sm">
@@ -143,40 +142,40 @@ export function DashboardPage() {
             </div>
           )}
         </section>
-      </div>
 
-      <section aria-labelledby="ending-title" className="mt-6 rounded-xl border bg-card p-5 shadow-xs">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 id="ending-title" className="font-semibold">Contratos a vencer <span className="font-normal text-muted-foreground">(próximos 60 dias)</span></h2>
-          <Link to="/app/contracts?situation=ENCERRANDO" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            Ver todos <ArrowRight className="size-4" aria-hidden />
-          </Link>
-        </div>
-        {ending.isPending ? (
-          <LoadingRows rows={3} />
-        ) : ending.isError ? (
-          <ErrorState error={ending.error} onRetry={() => ending.refetch()} />
-        ) : ending.data.content.length === 0 ? (
-          <EmptyState title="Nenhum contrato vencendo" description="Contratos ativos que terminam em até 60 dias aparecem aqui." />
-        ) : (
-          <ul className="grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-            {ending.data.content.map((c) => (
-              <li key={c.id}>
-                <Link to={`/app/contracts/${c.id}`} className="flex items-center gap-3 py-2.5 hover:bg-muted/40">
-                  <FileText className="size-9 shrink-0 rounded-lg bg-orange-100 p-2 text-brand-solid dark:bg-orange-950 dark:text-orange-300" aria-hidden />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{c.code} – {c.propertyTitle}</span>
-                    <span className="block truncate text-xs text-muted-foreground">Vence em {formatDate(c.endDate)}</span>
-                  </span>
-                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                    {Math.max(0, daysUntil(c.endDate))} dias
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        <section aria-labelledby="ending-title" className="rounded-xl border bg-card p-5 shadow-xs lg:col-span-2 xl:col-span-1">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 id="ending-title" className="font-semibold">Contratos a vencer</h2>
+            <Link to="/app/contracts?situation=ENCERRANDO" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              Ver todos <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
+          {ending.isPending ? (
+            <LoadingRows rows={3} />
+          ) : ending.isError ? (
+            <ErrorState error={ending.error} onRetry={() => ending.refetch()} />
+          ) : ending.data.content.length === 0 ? (
+            <EmptyState title="Nenhum contrato vencendo" description="Contratos ativos que terminam em até 60 dias aparecem aqui." />
+          ) : (
+            <ul className="divide-y">
+              {ending.data.content.map((c) => (
+                <li key={c.id}>
+                  <Link to={`/app/contracts/${c.id}`} className="flex items-center gap-3 py-2.5 hover:bg-muted/40">
+                    <FileText className="size-9 shrink-0 rounded-lg bg-orange-100 p-2 text-brand-solid dark:bg-orange-950 dark:text-orange-300" aria-hidden />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{c.code} – {c.propertyTitle}</span>
+                      <span className="block truncate text-xs text-muted-foreground">Vence em {formatDate(c.endDate)} · {formatBRL(c.monthlyRent)}</span>
+                    </span>
+                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                      {Math.max(0, daysUntil(c.endDate))} dias
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </>
   )
 }

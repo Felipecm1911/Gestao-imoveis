@@ -29,12 +29,14 @@ import br.com.gestaoimoveis.contracts.api.ContractDtos.ContractRequest;
 import br.com.gestaoimoveis.contracts.api.ContractDtos.ContractResponse;
 import br.com.gestaoimoveis.contracts.api.ContractDtos.HistoryEntry;
 import br.com.gestaoimoveis.contracts.api.ContractDtos.InstallmentResponse;
+import br.com.gestaoimoveis.contracts.api.ContractDtos.PaymentResponse;
 import br.com.gestaoimoveis.contracts.api.ContractDtos.PropertyRef;
 import br.com.gestaoimoveis.contracts.api.ContractDtos.Stats;
 import br.com.gestaoimoveis.contracts.api.ContractDtos.Summary;
 import br.com.gestaoimoveis.contracts.api.ContractDtos.TerminateRequest;
 import br.com.gestaoimoveis.contracts.domain.ContractAdjustment;
 import br.com.gestaoimoveis.contracts.domain.InstallmentPlan;
+import br.com.gestaoimoveis.contracts.domain.Payment;
 import br.com.gestaoimoveis.contracts.domain.RentInstallment;
 import br.com.gestaoimoveis.contracts.domain.RentalContract;
 import br.com.gestaoimoveis.contracts.domain.RentalContract.AdjustmentIndex;
@@ -43,6 +45,7 @@ import br.com.gestaoimoveis.contracts.domain.RentalContract.Situation;
 import br.com.gestaoimoveis.contracts.domain.RentalContract.Status;
 import br.com.gestaoimoveis.contracts.domain.RentalContract.Terms;
 import br.com.gestaoimoveis.contracts.repository.ContractAdjustmentRepository;
+import br.com.gestaoimoveis.contracts.repository.PaymentRepository;
 import br.com.gestaoimoveis.contracts.repository.RentInstallmentRepository;
 import br.com.gestaoimoveis.contracts.repository.RentalContractRepository;
 import br.com.gestaoimoveis.contracts.repository.RentalContractRepository.Filter;
@@ -74,6 +77,7 @@ public class ContractService {
     private final RentalContractRepository contracts;
     private final RentInstallmentRepository installments;
     private final ContractAdjustmentRepository adjustments;
+    private final PaymentRepository payments;
     private final PropertyService properties;
     private final OwnerService owners;
     private final TenantService tenants;
@@ -82,11 +86,13 @@ public class ContractService {
     private final AuditService audit;
 
     ContractService(RentalContractRepository contracts, RentInstallmentRepository installments,
-            ContractAdjustmentRepository adjustments, PropertyService properties, OwnerService owners,
+            ContractAdjustmentRepository adjustments, PaymentRepository payments, PropertyService properties,
+            OwnerService owners,
             TenantService tenants, UserService users, OrganizationService organizations, AuditService audit) {
         this.contracts = contracts;
         this.installments = installments;
         this.adjustments = adjustments;
+        this.payments = payments;
         this.properties = properties;
         this.owners = owners;
         this.tenants = tenants;
@@ -183,7 +189,7 @@ public class ContractService {
         return toResponse(c);
     }
 
-    /** Reajuste manual: novo aluguel vale para as competências que começam a partir da data de vigência. */
+    /** Reajuste manual: novo aluguel vale para as competências sem pagamento a partir da data de vigência. */
     @Transactional
     public ContractResponse adjust(UUID id, AdjustRequest req) {
         RentalContract c = load(id);
@@ -198,7 +204,7 @@ public class ContractService {
         }
         c.adjustRent(newRent);
         for (RentInstallment i : installments.findByContractIdOrderByReferenceMonth(id)) {
-            if (i.isOpen() && !i.getReferenceMonth().isBefore(req.effectiveDate())) {
+            if (i.isOpen() && i.isUnpaid() && !i.getReferenceMonth().isBefore(req.effectiveDate())) {
                 i.changeAmount(InstallmentPlan.amount(newRent, YearMonth.from(i.getReferenceMonth()),
                         c.getStartDate(), c.getEndDate()));
             }
@@ -233,7 +239,7 @@ public class ContractService {
         return toResponse(r);
     }
 
-    /** Encerra antes do fim: cancela as parcelas em aberto que venceriam depois da data. */
+    /** Encerra antes do fim: cancela as parcelas sem pagamento que venceriam depois da data. */
     @Transactional
     public ContractResponse terminate(UUID id, TerminateRequest req) {
         RentalContract c = load(id);
@@ -244,7 +250,7 @@ public class ContractService {
         Map<String, Object> before = c.snapshot();
         c.end(req.date(), req.reason().trim());
         installments.findByContractIdOrderByReferenceMonth(id).stream()
-                .filter(i -> i.isOpen() && i.getDueDate().isAfter(req.date()))
+                .filter(i -> i.isOpen() && i.isUnpaid() && i.getDueDate().isAfter(req.date()))
                 .forEach(RentInstallment::cancel);
         contracts.flush();
         if (!contracts.existsByOrganizationIdAndPropertyIdAndStatus(org(), c.getPropertyId(), Status.ATIVO)) {
@@ -325,21 +331,29 @@ public class ContractService {
                 : contracts.findByIdAndOrganizationId(c.getPreviousContractId(), org())
                         .map(prev -> new ContractRef(prev.getId(), prev.code())).orElse(null);
 
+        List<RentInstallment> all = installments.findByContractIdOrderByReferenceMonth(c.getId());
+        Map<UUID, List<PaymentResponse>> paymentsByInstallment = paymentResponses(
+                payments.findByInstallmentIdInOrderByCreatedAt(all.stream().map(RentInstallment::getId).toList()))
+                .stream().collect(Collectors.groupingBy(PaymentResponse::installmentId));
         List<InstallmentResponse> rows = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO.setScale(2);
+        BigDecimal received = total;
         BigDecimal open = total;
         BigDecimal overdue = total;
-        for (RentInstallment i : installments.findByContractIdOrderByReferenceMonth(c.getId())) {
-            boolean late = i.isOpen() && i.getDueDate().isBefore(today);
+        for (RentInstallment i : all) {
+            RentInstallment.Situation situation = i.situation(today);
+            List<PaymentResponse> paid = paymentsByInstallment.getOrDefault(i.getId(), List.of());
             rows.add(new InstallmentResponse(i.getId(), rows.size() + 1, i.getReferenceMonth(), i.getDueDate(),
-                    i.getAmount(), late ? "EM_ATRASO" : i.getStatus().name()));
+                    i.getAmount(), i.getPaidAmount(), i.balance(),
+                    paid.stream().filter(payment -> payment.reversedAt() == null).map(PaymentResponse::paidOn)
+                            .max(LocalDate::compareTo).orElse(null),
+                    situation, paid));
             if (!i.isOpen()) continue; // cancelada não entra no total
             total = total.add(i.getAmount());
-            if (late) overdue = overdue.add(i.getAmount());
-            else open = open.add(i.getAmount());
+            received = received.add(i.getPaidAmount());
+            if (situation == RentInstallment.Situation.EM_ATRASO) overdue = overdue.add(i.balance());
+            else open = open.add(i.balance());
         }
-        // pagamentos chegam na Fase 4; até lá nada foi recebido
-        BigDecimal received = BigDecimal.ZERO.setScale(2);
         BigDecimal progress = total.signum() == 0 ? BigDecimal.ZERO.setScale(1)
                 : received.multiply(BigDecimal.valueOf(100)).divide(total, 1, RoundingMode.HALF_EVEN);
 
@@ -355,6 +369,17 @@ public class ContractService {
                                 a.getOldRent(), a.getNewRent(), a.getCreatedAt()))
                         .toList(),
                 new Summary(total, received, open, overdue, progress), c.getCreatedAt(), c.getVersion());
+    }
+
+    /** Pagamentos como a API os devolve, com o nome de quem registrou. */
+    List<PaymentResponse> paymentResponses(List<Payment> list) {
+        if (list.isEmpty()) return List.of();
+        Map<UUID, String> names = users.list().stream().collect(Collectors.toMap(UserResponse::id, UserResponse::name));
+        return list.stream()
+                .map(p -> new PaymentResponse(p.getId(), p.getInstallmentId(), p.getAmount(), p.getPaidOn(),
+                        p.getMethod(), p.getNotes(), names.get(p.getUserId()), p.getCreatedAt(), p.getReversedAt(),
+                        p.getReversalReason()))
+                .toList();
     }
 
     private RentalContract renewalOf(UUID id) {

@@ -16,6 +16,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import br.com.gestaoimoveis.contracts.domain.Payment;
+import br.com.gestaoimoveis.contracts.domain.RentInstallment;
 import br.com.gestaoimoveis.contracts.domain.RentalContract.AdjustmentIndex;
 import br.com.gestaoimoveis.contracts.domain.RentalContract.GuaranteeType;
 import br.com.gestaoimoveis.contracts.domain.RentalContract.Situation;
@@ -56,9 +58,22 @@ public final class ContractDtos {
 
     public record ContractRef(UUID id, String code) {}
 
-    /** status: ABERTA, EM_ATRASO (aberta e vencida) ou CANCELADA. */
+    public record PaymentRequest(
+            @NotNull @DecimalMin("0.01") @Digits(integer = 12, fraction = 2) BigDecimal amount,
+            @NotNull LocalDate paidOn,
+            @NotNull Payment.Method method,
+            @Size(max = 500) String notes) {}
+
+    public record ReverseRequest(@NotBlank @Size(max = 500) String reason) {}
+
+    public record PaymentResponse(UUID id, UUID installmentId, BigDecimal amount, LocalDate paidOn,
+            Payment.Method method, String notes, String userName, Instant createdAt, Instant reversedAt,
+            String reversalReason) {}
+
+    /** paidOn: data do último pagamento válido. payments inclui os estornados, para o histórico da parcela. */
     public record InstallmentResponse(UUID id, int number, LocalDate referenceMonth, LocalDate dueDate,
-            BigDecimal amount, String status) {}
+            BigDecimal amount, BigDecimal paid, BigDecimal balance, LocalDate paidOn,
+            RentInstallment.Situation status, List<PaymentResponse> payments) {}
 
     public record AdjustmentResponse(UUID id, BigDecimal percent, LocalDate effectiveDate, BigDecimal oldRent,
             BigDecimal newRent, Instant createdAt) {}

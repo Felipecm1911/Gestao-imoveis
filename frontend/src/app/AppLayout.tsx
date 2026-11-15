@@ -1,5 +1,5 @@
-import { useState, type ComponentType } from 'react'
-import { Navigate, NavLink, Outlet, useNavigate } from 'react-router'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
+import { Link, Navigate, NavLink, Outlet, useNavigate } from 'react-router'
 import {
   Bell,
   Building2,
@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLogout, useMe, type Me } from '@/features/auth/api'
+import { useContractStats } from '@/features/contracts/api'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { applyTheme, currentTheme, type Theme } from './theme'
@@ -42,13 +43,13 @@ type NavItem = { label: string; icon: ComponentType<{ className?: string }>; to?
 const nav: NavItem[] = [
   { label: 'Dashboard', icon: Home, to: '/app/dashboard', mobile: 'Início' },
   { label: 'Imóveis', icon: Building2, to: '/app/properties', mobile: 'Imóveis' },
-  { label: 'Proprietários', icon: Users, to: '/app/owners', mobile: 'Proprietários' },
+  { label: 'Proprietários', icon: Users, to: '/app/owners' },
   { label: 'Inquilinos', icon: UserRound, to: '/app/tenants' },
-  { label: 'Contratos', icon: FileText, to: '/app/contracts' },
-  { label: 'Financeiro', icon: CircleDollarSign },
-  { label: 'Manutenções', icon: Wrench },
-  { label: 'Relatórios', icon: ChartColumn },
-  { label: 'Configurações', icon: Settings, to: '/app/users', adminOnly: true, mobile: 'Config.' },
+  { label: 'Contratos', icon: FileText, to: '/app/contracts', mobile: 'Contratos' },
+  { label: 'Financeiro', icon: CircleDollarSign, to: '/app/finance', mobile: 'Financeiro' },
+  { label: 'Manutenções', icon: Wrench, to: '/app/maintenance' },
+  { label: 'Relatórios', icon: ChartColumn, to: '/app/reports' },
+  { label: 'Configurações', icon: Settings, to: '/app/users', adminOnly: true },
 ]
 
 const roleLabel: Record<string, string> = { ADMIN: 'Administrador', STAFF: 'Equipe', OWNER: 'Proprietário', TENANT: 'Inquilino' }
@@ -99,10 +100,21 @@ function Sidebar({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
 /** Busca do topo: por enquanto o único conteúdo pesquisável são os imóveis. */
 function GlobalSearch() {
   const navigate = useNavigate()
+  const input = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && input.current?.offsetWidth) {
+        event.preventDefault()
+        input.current.focus()
+      }
+    }
+    window.addEventListener('keydown', focusSearch)
+    return () => window.removeEventListener('keydown', focusSearch)
+  }, [])
   return (
     <form
       role="search"
-      className="relative hidden w-full max-w-md md:block"
+      className="relative ml-auto hidden w-full max-w-xs md:block"
       onSubmit={(e) => {
         e.preventDefault()
         const q = String(new FormData(e.currentTarget).get('q') ?? '').trim()
@@ -110,7 +122,7 @@ function GlobalSearch() {
       }}
     >
       <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-      <Input name="q" type="search" className="bg-background pl-9" placeholder="Buscar imóvel por código, título ou rua…" aria-label="Buscar no sistema" />
+      <Input ref={input} name="q" type="search" className="bg-background pl-9" placeholder="Buscar imóvel (Ctrl + K)" aria-label="Buscar no sistema" />
     </form>
   )
 }
@@ -135,6 +147,37 @@ function MobileTabBar({ me, onMenu }: { me: Me; onMenu: () => void }) {
         Mais
       </button>
     </nav>
+  )
+}
+
+function ContractNotifications() {
+  const stats = useContractStats()
+  const ending = stats.data?.ending ?? 0
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative" aria-label="Notificações">
+          <Bell />
+          {ending > 0 && <span className="absolute top-1 right-1 size-2 rounded-full bg-brand-solid ring-2 ring-card" aria-hidden />}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {ending > 0 ? (
+          <DropdownMenuItem asChild>
+            <Link to="/app/contracts?situation=ENCERRANDO">
+              <FileText /> {ending} {ending === 1 ? 'contrato a vencer' : 'contratos a vencer'}
+            </Link>
+          </DropdownMenuItem>
+        ) : (
+          <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+            {stats.isPending ? 'Carregando contratos…' : stats.isError ? 'Não foi possível consultar os contratos.' : 'Nenhum contrato a vencer.'}
+          </p>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -165,7 +208,7 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-svh">
-      <aside className="sticky top-0 hidden h-svh w-64 shrink-0 bg-sidebar text-sidebar-foreground md:block">
+      <aside className="sticky top-0 hidden h-svh w-52 shrink-0 bg-sidebar text-sidebar-foreground md:block">
         <Sidebar me={me.data} />
       </aside>
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -175,25 +218,14 @@ export function AppLayout() {
         </SheetContent>
       </Sheet>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-card/95 px-4 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-card/95 px-4 backdrop-blur md:px-6">
           <Button variant="ghost" size="icon" className="md:hidden" aria-label="Abrir menu" onClick={() => setDrawerOpen(true)}>
             <Menu />
           </Button>
           <Logo className="md:hidden [&_span]:text-lg [&_svg]:size-6" />
           <GlobalSearch />
-          <div className="ml-auto flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Notificações">
-                  <Bell />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <p className="px-2 py-6 text-center text-sm text-muted-foreground">Nenhuma notificação por enquanto.</p>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="ml-auto flex shrink-0 items-center gap-1 md:ml-0">
+            <ContractNotifications />
             <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}>
               {theme === 'dark' ? <Sun /> : <Moon />}
             </Button>
@@ -220,7 +252,7 @@ export function AppLayout() {
             </DropdownMenu>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl flex-1 p-4 pb-24 md:p-8">
+        <main className="mx-auto w-full max-w-[96rem] flex-1 p-4 pb-24 md:p-6">
           <Outlet />
         </main>
       </div>

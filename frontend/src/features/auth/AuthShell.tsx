@@ -19,12 +19,12 @@ export function AuthShell({ title, description, children, footer }: { title: str
   const me = useMe()
   if (me.data) return <Navigate to="/app/dashboard" replace />
   return (
-    <div className="grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div className="grid min-h-svh lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
       <aside className="relative hidden overflow-hidden bg-sidebar p-12 text-sidebar-foreground lg:flex lg:flex-col">
         <img src={building} alt="" className="pointer-events-none absolute inset-y-0 right-0 h-full w-[62%] object-cover" />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--sidebar)_38%,color-mix(in_oklab,var(--sidebar)_70%,transparent)_55%,transparent_80%)]" />
         <Logo subtitle className="relative text-white [&_span]:text-4xl [&_span.block]:mt-1 [&_span.block]:text-base [&_svg]:size-14" />
-        <div className="relative mt-14 max-w-[52%]">
+        <div className="relative z-10 my-auto max-w-[58%] pb-28">
           <p className="text-[1.75rem] leading-tight font-semibold text-white xl:text-[2rem]">
             O controle completo da sua imobiliária em um só lugar
           </p>
@@ -41,7 +41,7 @@ export function AuthShell({ title, description, children, footer }: { title: str
         </svg>
       </aside>
       <main className="flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm sm:p-10">
+        <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-sm sm:p-9">
           <Logo className="mb-6 justify-center" />
           <h1 className="text-center text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="mt-1 mb-8 text-center text-sm text-muted-foreground">{description}</p>

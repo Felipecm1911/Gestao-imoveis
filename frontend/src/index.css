@@ -54,26 +54,26 @@
 
 /* Paleta Imobly: azul-marinho (marca), azul-petróleo (ação), terracota (destaque), areia (fundo) */
 :root {
-    --background: #f7f3ed;
-    --foreground: #16232f;
+    --background: #f5f7f9;
+    --foreground: #102335;
     --card: #ffffff;
-    --card-foreground: #16232f;
+    --card-foreground: #102335;
     --popover: #ffffff;
-    --popover-foreground: #16232f;
-    --primary: #0f766e;
+    --popover-foreground: #102335;
+    --primary: #006573;
     --primary-foreground: #ffffff;
-    --secondary: #efe8de;
+    --secondary: #f5e9dc;
     --secondary-foreground: #12304a;
-    --muted: #f1ece4;
+    --muted: #edf2f5;
     --muted-foreground: #5b6772;
     --accent: #e6f2f0;
     --accent-foreground: #0d4f4a;
     --destructive: #c53030;
-    --border: #e6ded2;
-    --input: #d9d0c3;
-    --ring: #0f766e;
-    --brand: #c96b4b;
-    --brand-solid: #b0553a; /* terracota escurecida: texto branco com contraste AA */
+    --border: #dce5eb;
+    --input: #cbd8e1;
+    --ring: #006573;
+    --brand: #ce704a;
+    --brand-solid: #aa492c; /* terracota escurecida: texto branco com contraste AA */
     --success: #2f855a;
     --warning: #b7791f;
     --chart-1: #0f766e;
@@ -81,14 +81,14 @@
     --chart-3: #12304a;
     --chart-4: #b7791f;
     --chart-5: #2f855a;
-    --radius: 0.75rem;
-    --sidebar: #12304a;
+    --radius: 0.625rem;
+    --sidebar: #082b40;
     --sidebar-foreground: #dbe5ee;
-    --sidebar-primary: #0f766e;
+    --sidebar-primary: #aa492c;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1b4163;
+    --sidebar-accent: #103c50;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #1f4567;
+    --sidebar-border: #164357;
     --sidebar-ring: #2bb3a3;
 }
 

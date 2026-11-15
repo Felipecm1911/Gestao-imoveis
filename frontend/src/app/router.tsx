@@ -6,6 +6,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { SignupPage } from '@/features/auth/SignupPage'
 import { OwnerFormPage } from '@/features/owners/OwnerFormPage'
+import { FinancePage, MaintenancePage, ReportsPage } from '@/features/operations/OperationsPages'
 import { OwnersPage } from '@/features/owners/OwnersPage'
 import { PropertiesPage } from '@/features/properties/PropertiesPage'
 import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
@@ -39,6 +40,9 @@ export const router = createBrowserRouter([
       { path: 'contracts/new', element: <ContractFormPage /> },
       { path: 'contracts/:id', element: <ContractDetailPage /> },
       { path: 'contracts/:id/edit', element: <ContractFormPage key="edit" /> },
+      { path: 'finance', element: <FinancePage /> },
+      { path: 'maintenance', element: <MaintenancePage /> },
+      { path: 'reports', element: <ReportsPage /> },
       { path: 'users', element: <UsersPage /> },
     ],
   },
